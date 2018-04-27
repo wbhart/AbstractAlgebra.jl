@@ -54,6 +54,8 @@ include("generic/Matrix.jl")
 
 include("generic/Fraction.jl")
 
+include("generic/AsField.jl")
+
 include("generic/Map.jl")
 
 include("generic/MapWithInverse.jl")
