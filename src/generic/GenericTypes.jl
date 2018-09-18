@@ -833,3 +833,20 @@ mutable struct MapCache{D, C, S, T, De, Ce} <: AbstractAlgebra.Map{D, C, S, T}
    end
 end
 
+###############################################################################
+#
+#   AsField/AsFieldElem
+#
+###############################################################################
+
+struct AsField{T, S} <: AbstractAlgebra.Field
+   par::S
+   function AsField(R::S) where S <: AbstractAlgebra.Ring
+      T = elem_type(R)
+      return new{T, S}(R)
+   end
+end
+
+struct AsFieldElem{T} <: AbstractAlgebra.FieldElem
+   data::T
+end
