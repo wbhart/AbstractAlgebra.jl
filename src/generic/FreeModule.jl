@@ -188,6 +188,7 @@ end
 ###############################################################################
 
 function FreeModule(R::NCRing, rank::Int; cached::Bool = true)
+   rank < 0 && throw(DomainError("Rank must be non-negative"))
    T = elem_type(R)
    return FreeModule{T}(R, rank, cached)
 end
