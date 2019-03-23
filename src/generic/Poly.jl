@@ -67,9 +67,10 @@ var(a::AbstractAlgebra.PolyRing) = a.S
 """
 symbols(a::AbstractAlgebra.PolyRing) = [a.S]
 
-function check_parent(a::PolynomialElem, b::PolynomialElem)
-   parent(a) != parent(b) &&
-                error("Incompatible polynomial rings in polynomial operation")
+function check_parent(a::PolynomialElem, b::PolynomialElem, throw::Bool = true)
+   b = parent(a) != parent(b)
+   b && throw && error("Incompatible polynomial rings in polynomial operation")
+   return !b
 end
 
 ###############################################################################
@@ -707,7 +708,8 @@ end
 > equal to the minimum of the two precisions.
 """
 function ==(x::AbstractAlgebra.PolyElem{T}, y::AbstractAlgebra.PolyElem{T}) where {T <: RingElement}
-   check_parent(x, y)
+   b = check_parent(x, y, false)
+   !b && return false
    if length(x) != length(y)
       return false
    else
@@ -752,27 +754,27 @@ end
     ==(x::AbstractAlgebra.PolyElem{T}, y::T) where {T <: RingElem}
 > Return `true` if $x == y$.
 """
-==(x::AbstractAlgebra.PolyElem{T}, y::T) where T <: RingElem = ((length(x) == 0 && y == 0)
+ ==(x::AbstractAlgebra.PolyElem{T}, y::T) where T <: RingElem = ((length(x) == 0 && y == 0)
                         || (length(x) == 1 && coeff(x, 0) == y))
 
 @doc Markdown.doc"""
     ==(x::Generic.PolynomialElem, y::Union{Integer, Rational, AbstractFloat})
 > Return `true` if $x == y$ arithmetically, otherwise return `false`.
 """
-==(x::PolynomialElem, y::Union{Integer, Rational, AbstractFloat}) = ((length(x) == 0 && base_ring(x)(y) == 0)
+ ==(x::PolynomialElem, y::Union{Integer, Rational, AbstractFloat}) = ((length(x) == 0 && base_ring(x)(y) == 0)
                         || (length(x) == 1 && coeff(x, 0) == y))
 
 @doc Markdown.doc"""
     ==(x::T, y::AbstractAlgebra.PolyElem{T}) where T <: RingElem = y == x
 > Return `true` if $x = y$.
 """
-==(x::T, y::AbstractAlgebra.PolyElem{T}) where T <: RingElem = y == x
+ ==(x::T, y::AbstractAlgebra.PolyElem{T}) where T <: RingElem = y == x
 
 @doc Markdown.doc"""
     ==(x::Union{Integer, Rational, AbstractFloat}, y::AbstractAlgebra.PolyElem)
 > Return `true` if $x == y$ arithmetically, otherwise return `false`.
 """
-==(x::Union{Integer, Rational, AbstractFloat}, y::AbstractAlgebra.PolyElem) = y == x
+ ==(x::Union{Integer, Rational, AbstractFloat}, y::AbstractAlgebra.PolyElem) = y == x
 
 ###############################################################################
 #
