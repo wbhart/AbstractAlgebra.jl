@@ -266,3 +266,34 @@ include("Factor.jl")
 ###############################################################################
 
 include("polysubst.jl")
+
+@docs Markdown.doc"""
+    berlekamp_massey(L::Array{T, 1}) where T <: RingElement
+> Return the minimum polynomial of a recurrence $L$. The result is a polynomial
+> in a univariate polynomial ring generated at runtime.
+"""
+function berlekamp_massey(L::Array{T, 1}) where T <: RingElement
+     R_s = parent(L[1])
+     lg = length(L)
+     L = [R_s(L[lg - i]) for i in 0:lg - 1]
+     Ry, Y = PolynomialRing(R_s, "Y", cached=false)
+     g = Ry(L)
+     if iszero(g)
+       return g
+     end
+     f = Y^lg
+     N = R_s(inv(lead(g))); g1 = g*N
+     v0 = Ry(); v1 = Ry(1)
+     while lg <= 2*degree(g1)
+       q, r = divrem(f, g1)
+       if r == 0
+          N = R_s(1)
+       else
+          N = R_s(inv(lead(r)))
+       end
+       v = (v0 - q*v1)*N
+       v0 = v1; v1 = v; f = g1; g1 = r*N
+     end
+     return divexact(v1, lead(v1))
+end
+
