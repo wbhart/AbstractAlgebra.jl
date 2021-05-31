@@ -12,7 +12,8 @@ function ispower(a::RingElem, n::Int)
         return true, a
     end
     R = parent(a)
-    Rt, t = PolynomialRing(R, "t", cached = false)
+    Rt = UPolyRing(R)
+    t = gen(Rt)
     r = roots(t^n-a)
     if length(r) == 0
         return false, a

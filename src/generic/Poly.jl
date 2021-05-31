@@ -3345,3 +3345,8 @@ function PolynomialRing(R::AbstractAlgebra.Ring, s::Symbol; cached::Bool = true)
 
    return parent_obj, parent_obj([R(0), R(1)])
 end
+
+function UPolyRing(R::AbstractAlgebra.Ring)
+   T = elem_type(R)
+   return PolyRing{T}(R, :x, false)
+end

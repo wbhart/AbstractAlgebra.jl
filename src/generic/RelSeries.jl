@@ -1629,3 +1629,15 @@ function PowerSeriesRing(R::AbstractAlgebra.Ring, prec::Int, s::AbstractString; 
 
    return parent_obj, gen(parent_obj)
 end
+
+function AbsSeriesRing(R::AbstractAlgebra.Ring, prec::Int)
+   T = elem_type(R)
+   return AbsSeriesRing{T}(R, prec, :x, false)
+end
+
+function RelSeriesRing(R::AbstractAlgebra.Ring, prec::Int)
+   T = elem_type(R)
+   return RelSeriesRing{T}(R, prec, :x, false)
+end
+
+

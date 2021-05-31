@@ -65,6 +65,18 @@ the constructor as follows.
 R["x"]
 ```
 
+It is also possible to create a polynomial ring with default symbol as follows.
+This is a lightweight constructor and should be used in generic code wherever
+possible when creating polynomial rings where the symbol does not matter.
+
+```julia
+UPolyRing(R::AbstractAlgebra.Ring)
+```
+
+Given a base ring `R` return the polynomial ring $S = R[x]$. Note that unlike
+the constructors above, the return type is not a tuple. Only the ring is
+returned and not the generator. The polynomial ring is not cached.
+
 Here are some examples of creating polynomial rings and making use of the
 resulting parent objects to coerce various elements into the polynomial ring.
 
@@ -95,6 +107,8 @@ x + 1
 julia> m = T(z + 1)
 z + 1
 
+julia> R = UPolyRing(ZZ)
+Univariate Polynomial Ring in x over Integers
 ```
 
 All of the examples here are generic polynomial rings, but specialised implementations
