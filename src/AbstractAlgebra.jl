@@ -228,8 +228,6 @@ export abs_series, abs_series_type,
 
 export Generic
 
-include("error.jl")
-
 include("Rings.jl")
 
 const ZZ = JuliaZZ
