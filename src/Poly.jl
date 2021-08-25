@@ -99,12 +99,6 @@ than the length, even for constant polynomials.
 """
 degree(a::PolynomialElem) = length(a) - 1
 
-@doc Markdown.doc"""
-    modulus(a::PolyElem{T}) where {T <: ResElem}
-
-Return the modulus of the coefficients of the given polynomial.
-"""
-modulus(a::PolyElem{T}) where {T <: ResElem} = modulus(base_ring(a))
 
 @doc Markdown.doc"""
     leading_coefficient(a::PolynomialElem)
@@ -443,7 +437,7 @@ canonical_unit(x::PolynomialElem) = canonical_unit(leading_coefficient(x))
 #
 ###############################################################################
 
-function expressify(@nospecialize(a::Union{PolynomialElem, NCPolyElem}),
+function expressify(@nospecialize(a::PolynomialElem),
    x = var(parent(a)); context = nothing)
    sum = Expr(:call, :+)
    for k in degree(a):-1:0
@@ -460,11 +454,11 @@ function expressify(@nospecialize(a::Union{PolynomialElem, NCPolyElem}),
    return sum
 end
 
-function Base.show(io::IO, ::MIME"text/plain", a::Union{PolynomialElem, NCPolyElem})
+function Base.show(io::IO, ::MIME"text/plain", a::PolynomialElem)
    print(io, obj_to_string(a, context = io))
 end
 
-function Base.show(io::IO, a::Union{PolynomialElem, NCPolyElem})
+function Base.show(io::IO, a::PolynomialElem)
    print(io, obj_to_string(a, context = io))
 end
 
@@ -1309,7 +1303,7 @@ end
 ###############################################################################
 
 @doc Markdown.doc"""
-    mulmod(a::PolyElem{T}, b::PolyElem{T}, d::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+    mulmod(a::PolyElem{T}, b::PolyElem{T}, d::PolyElem{T}) where {T <: FieldElement}
 
 Return $a\times b \pmod{d}$.
 """
@@ -1320,7 +1314,7 @@ function mulmod(a::PolyElem{T}, b::PolyElem{T}, d::PolyElem{T}) where T <: RingE
 end
 
 @doc Markdown.doc"""
-    powermod(a::PolyElem{T}, b::Int, d::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+    powermod(a::PolyElem{T}, b::Int, d::PolyElem{T}) where {T <: FieldElement}
 
 Return $a^b \pmod{d}$. There are no restrictions on $b$.
 """
@@ -1358,11 +1352,11 @@ function powermod(a::PolyElem{T}, b::Int, d::PolyElem{T}) where T <: RingElement
 end
 
 @doc Markdown.doc"""
-    invmod(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+    invmod(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
 
 Return $a^{-1} \pmod{d}$.
 """
-function invmod(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+function invmod(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
    check_parent(a, b)
    g, z = gcdinv(a, b)
    if g != 1
@@ -1439,7 +1433,7 @@ end
 ###############################################################################
 
 @doc Markdown.doc"""
-    mod(f::PolyElem{T}, g::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+    mod(f::PolyElem{T}, g::PolyElem{T}) where {T <: FieldElement}
 
 Return $f \pmod{g}$.
 """
@@ -1472,7 +1466,7 @@ function rem(f::PolyElem{T}, g::PolyElem{T}) where T <: RingElement
 end
 
 @doc Markdown.doc"""
-    divrem(f::PolyElem{T}, g::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+    divrem(f::PolyElem{T}, g::PolyElem{T}) where {T <: FieldElement}
 
 Return a tuple $(q, r)$ such that $f = qg + r$ where $q$ is the euclidean
 quotient of $f$ by $g$.
@@ -1508,7 +1502,7 @@ function Base.divrem(f::PolyElem{T}, g::PolyElem{T}) where T <: RingElement
 end
 
 @doc Markdown.doc"""
-    div(f::PolyElem{T}, g::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+    div(f::PolyElem{T}, g::PolyElem{T}) where {T <: FieldElement}
 
 Return the euclidean quotient of $f$ by $g$.
 """
@@ -1523,7 +1517,7 @@ end
 #
 ##############################################################################
 
-function Base.div(f::PolyElem{T}, g::T) where T <: Union{FieldElem, ResElem, AbstractFloat, Rational}
+function Base.div(f::PolyElem{T}, g::T) where T <: Union{FieldElem, AbstractFloat, Rational}
    return div(f, parent(f)(g))
 end
 
@@ -1625,14 +1619,14 @@ function remove(z::PolyElem{T}, p::PolyElem{T}) where T <: RingElement
 end
 
 @doc Markdown.doc"""
-    remove(z::PolyElem{T}, p::PolyElem{T}) where T <: Union{ResElem, FieldElement}
+    remove(z::PolyElem{T}, p::PolyElem{T}) where T <: FieldElement
 
 Compute the valuation of $z$ at $p$, that is, the largest $k$ such that
 $p^k$ divides $z$. Additionally, $z/p^k$ is returned as well.
 
 See also `valuation`, which only returns the valuation.
 """
-function remove(z::PolyElem{T}, p::PolyElem{T}) where T <: Union{ResElem, FieldElement}
+function remove(z::PolyElem{T}, p::PolyElem{T}) where T <: FieldElement
  check_parent(z, p)
  !isexact_type(T) && error("remove requires an exact ring")
  iszero(z) && error("Not yet implemented")
@@ -1968,7 +1962,7 @@ function gcd(a::PolyElem{T}, b::PolyElem{T}, ignore_content::Bool = false) where
    return divexact(b, canonical_unit(leading_coefficient(b)))
 end
 
-function gcd(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+function gcd(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
    check_parent(a, b)
    if length(a) > length(b)
       (a, b) = (b, a)
@@ -2116,11 +2110,11 @@ end
 ###############################################################################
 
 @doc Markdown.doc"""
-    integral(x::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+    integral(x::PolyElem{T}) where {T <: FieldElement}
 
 Return the integral of the polynomial $x$.
 """
-function integral(x::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+function integral(x::PolyElem{T}) where {T <: FieldElement}
    len = length(x)
    p = parent(x)()
    fit!(p, len + 1)
@@ -2302,7 +2296,7 @@ function resultant_subresultant(p::PolyElem{T}, q::PolyElem{T}) where T <: RingE
    end
 end
 
-function resultant_lehmer(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+function resultant_lehmer(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
    local crossover = 40
    R = base_ring(a)
    check_parent(a, b)
@@ -2431,7 +2425,7 @@ function resultant(p::PolyElem{T}, q::PolyElem{T}) where T <: RingElement
   end
 end
 
-function resultant_euclidean(a::PolyElem{T}, b::PolyElem{T}) where T <: Union{ResElem, FieldElement}
+function resultant_euclidean(a::PolyElem{T}, b::PolyElem{T}) where T <: FieldElement
    check_parent(a, b)
    if length(a) == 0 || length(b) == 0
       return zero(base_ring(a))
@@ -2472,7 +2466,7 @@ function resultant_euclidean(a::PolyElem{T}, b::PolyElem{T}) where T <: Union{Re
    return c1^(lb - 1)*c2^(la - 1)*s*sgn
 end
 
-function resultant(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+function resultant(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
    try
       return resultant_euclidean(a, b)
    catch
@@ -2597,12 +2591,12 @@ end
 ###############################################################################
 
 @doc Markdown.doc"""
-    gcdx(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+    gcdx(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
 
 Return a tuple $(g, s, t)$ such that $g$ is the greatest common divisor of
 $a$ and $b$ and such that $g = a\times s + b\times t$.
 """
-function gcdx(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+function gcdx(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
    check_parent(a, b)
    !isexact_type(T) && error("gcdx requires exact Bezout domain")
    if length(a) == 0
@@ -2643,13 +2637,13 @@ function gcdx(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldEl
 end
 
 @doc Markdown.doc"""
-    gcdinv(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+    gcdinv(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
 
 Return a tuple $(g, s)$ such that $g$ is the greatest common divisor of $a$
 and $b$ and such that $s = a^{-1} \pmod{b}$. This function is useful for
 inverting modulo a polynomial and checking that it really was invertible.
 """
-function gcdinv(a::PolyElem{T}, b::PolyElem{T}) where {T <: Union{ResElem, FieldElement}}
+function gcdinv(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
    check_parent(a, b)
    R = base_ring(a)
    if length(a) == 0
@@ -2891,35 +2885,6 @@ function interpolate(S::PolyRing, x::Vector{T}, y::Vector{T}) where T <: RingEle
          q = x[j] - x[j - i + 1]
          t = P[j]
          P[j] = divexact(p, q) # division is exact over domain (Lipson, 1971)
-      end
-   end
-   newton_to_monomial!(P, x)
-   r = S(P)
-   r = set_length!(r, normalise(r, n))
-   return r
-end
-
-function interpolate(S::PolyRing, x::Vector{T}, y::Vector{T}) where {T <: ResElem}
-   length(x) != length(y) && error("Array lengths don't match in interpolate")
-   n = length(x)
-   if n == 0
-      return S()
-   elseif n == 1
-      return S(y[1])
-   end
-   R = base_ring(S)
-   parent(y[1]) != R && error("Polynomial ring does not match inputs")
-   P = Array{T}(undef, n)
-   for i = 1:n
-      P[i] = deepcopy(y[i])
-   end
-   for i = 2:n
-      t = P[i - 1]
-      for j = i:n
-         p = P[j] - t
-         q = x[j] - x[j - i + 1]
-         t = P[j]
-         P[j] = p*inv(q) # must have invertible q for now
       end
    end
    newton_to_monomial!(P, x)

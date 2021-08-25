@@ -116,22 +116,6 @@ function use_karamul(a::Poly{Rational{BigInt}}, b::Poly{Rational{BigInt}})
    return minlen^1.7*div(bits, 2*(length(a) + length(b))) > 48500
 end
 
-function use_karamul(a::Poly{GFElem{Int}}, b::Poly{GFElem{Int}})
-   return min(length(a), length(b)) > 75
-end
-
-function use_karamul(a::Poly{GFElem{BigInt}}, b::Poly{GFElem{BigInt}})
-   minlen = min(length(a), length(b))
-   bits = ndigits(characteristic(parent(a)), base=2)
-   return minlen^2*bits > 2000
-end
-
-@doc Markdown.doc"""
-    mul_karatsuba(a::Poly{T}, b::Poly{T}, cutoff::Int) where T <: RingElement
-
-Return $a \times b$ using the Karatsuba algorithm recursively for problems of
-size roughly greater than `cutoff`.
-"""
 function mul_karatsuba(a::Poly{T}, b::Poly{T}, cutoff::Int) where T <: RingElement
    alen = length(a)
    blen = length(b)

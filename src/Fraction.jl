@@ -600,18 +600,6 @@ end
 #
 ##############################################################################
 
-# Return the derivative with respect to `x`.
-function derivative(f::FracElem{T}, x::T) where {T <: MPolyElem}
-    return derivative(f, var_index(x))
-end
-  
-# Return the derivative with respect to the `i`-th variable.
-function derivative(f::FracElem{T}, i::Int) where {T <: MPolyElem}
-    n = numerator(f)
-    d = denominator(f)
-    return (derivative(n, i)*d - n*derivative(d, i))//d^2
-end
-
 function derivative(f::FracElem{T}) where {T <: PolyElem}
     n = numerator(f)
     d = denominator(f)

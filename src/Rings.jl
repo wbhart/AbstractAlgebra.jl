@@ -150,10 +150,6 @@ function evaluate(x::AbstractAlgebra.PolyElem{T}, y::Integer) where T <: RingEle
    return evaluate(x, base_ring(x)(y))
 end
 
-function evaluate(x::AbstractAlgebra.MPolyElem{T}, y::Integer) where T <: RingElem
-   return evaluate(x, base_ring(x)(y))
-end
-
 ###############################################################################
 #
 #   Delayed reduction
@@ -216,8 +212,6 @@ end
 ################################################################################
 
 transpose(x::T) where {T <: RingElem} = deepcopy(x)
-
-adjoint(x::T) where {T <: MatElem} = transpose(x)
 
 adjoint(x::T) where {T <: RingElem} = deepcopy(x)
 

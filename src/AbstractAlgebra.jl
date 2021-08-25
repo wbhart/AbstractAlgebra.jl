@@ -55,12 +55,12 @@ using RandomExtensions: RandomExtensions, make, Make2
 
 export elem_type, parent_type
 
-export SetElem, GroupElem, AdditiveGroupElem, NCRingElem, RingElem, ModuleElem, FieldElem, RingElement,
+export SetElem, GroupElem, AdditiveGroupElem, RingElem, ModuleElem, FieldElem, RingElement,
        FieldElement, Map, AccessorNotSetError
 
 export SetMap, FunctionalMap, IdentityMap
 
-export NCPolyElem, PolyElem, SeriesElem, AbsSeriesElem, RelSeriesElem, ResElem, FracElem,
+export PolyElem, SeriesElem, AbsSeriesElem, RelSeriesElem, ResElem, FracElem,
        MatElem, MatAlgElem, FinFieldElem, MPolyElem, NumFieldElem, SimpleNumFieldElem
 
 export PolyRing, SeriesRing, ResRing, FracField, MatSpace, MatAlgebra,
@@ -85,7 +85,7 @@ end
 
 include("AbstractTypes.jl")
 
-const PolynomialElem{T} = Union{PolyElem{T}, NCPolyElem{T}}
+const PolynomialElem{T} = PolyElem{T}
 
 include("julia/JuliaTypes.jl")
 
