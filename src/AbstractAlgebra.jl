@@ -1,22 +1,5 @@
 module AbstractAlgebra
 
-using Random: SamplerTrivial, GLOBAL_RNG
-using RandomExtensions: RandomExtensions, make, Make, Make2, Make3, Make4
-
-using Markdown
-
-function exp(a::T) where T
-   return Base.exp(a)
-end
-
-function log(a::T) where T
-   return Base.log(a)
-end
-
-function sqrt(a::T; check::Bool=true) where T
-  return Base.sqrt(a; check=check)
-end
-
 function divrem(a::T, b::T) where T
   return Base.divrem(a, b)
 end
@@ -50,9 +33,6 @@ import Base: Array, abs, acos, acosh, adjoint, asin, asinh, atan, atanh, axes,
              typed_hcat, typed_vcat, vcat, xor, zero, zeros,
              +, -, *, ==, ^, &, |, <<, >>, ~, <=, >=, <, >, //, /, !=
 
-using Random: Random, AbstractRNG, SamplerTrivial
-using RandomExtensions: RandomExtensions, make, Make2
-
 export elem_type, parent_type
 
 export SetElem, GroupElem, AdditiveGroupElem, RingElem, ModuleElem, FieldElem, RingElement,
@@ -67,9 +47,6 @@ export PolyRing, SeriesRing, ResRing, FracField, MatSpace, MatAlgebra,
        FinField, MPolyRing, NumField, SimpleNumField
 
 export ZZ, QQ, zz, qq, RealField, RDF
-
-function expressify
-end
 
 function coeff end
 
@@ -147,12 +124,8 @@ import .Generic: abs_series, abs_series_type,
                  supermodule, term, terms, total_degree,
                  to_univariate, trailing_coefficient,
                  truncate, upscale, var_index,
-                 zero,
-       # Moved from Hecke into Misc
-                 Loc, Localization, LocElem,
-                 roots, sturm_sequence
+                 zero
 
-# Do not export inv, div, divrem, exp, log, sqrt, numerator and denominator as we define our own
 export abs_series, abs_series_type,
                  addmul_delayed_reduction!, addmul!,
                  base_field, base_ring, basis,
@@ -206,11 +179,7 @@ export abs_series, abs_series_type,
                  sylvester_matrix, term, terms, to_univariate,
                  total_degree, trailing_coefficient, truncate,
                  var_index, zero,
-                 MatrixElem, PolynomialElem,
-       # Moved from Hecke into Misc
-                 divexact_low, divhigh,
-                 ismonic, Loc, Localization, LocElem, mulhigh_n,
-                 PolyCoeffs, roots, sturm_sequence
+                 MatrixElem, PolynomialElem
 
 export Generic
 
