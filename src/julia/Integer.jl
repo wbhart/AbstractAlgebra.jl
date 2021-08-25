@@ -10,10 +10,6 @@ parent_type(::Type{T}) where T <: Integer = Integers{T}
 
 base_ring(a::Integers{T}) where T <: Integer = Union{}
 
-isexact_type(::Type{T}) where T <: Integer = true
-
-isdomain_type(::Type{T}) where T <: Integer = true
-
 zero(::Integers{T}) where T <: Integer = T(0)
 
 one(::Integers{T}) where T <: Integer = T(1)
