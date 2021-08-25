@@ -299,11 +299,3 @@ include("julia/Rational.jl")
 
 include("Fields.jl")
 
-###############################################################################
-#
-#   Generic functions to be defined after all rings
-#
-###############################################################################
-
-include("polysubst.jl")
-

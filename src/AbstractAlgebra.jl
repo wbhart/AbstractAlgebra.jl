@@ -358,8 +358,6 @@ include("Rings.jl")
 
 include("PrettyPrinting.jl")
 
-include("Deprecations.jl")
-
 function sig_exists(T::Type{Tuple{U, V, W}}, sig_table::Vector{X}) where {U, V, W, X}
    for s in sig_table
       if s === T
