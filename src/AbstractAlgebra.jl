@@ -25,7 +25,7 @@ import Base: //, ==, -, length, *, gcd, iszero, zero, parent, +, one
 export elem_type, parent_type
 
 export RingElem, FieldElem, RingElement,
-       FieldElement, Map
+       FieldElement
 
 export PolyElem, FracElem
 
