@@ -57,6 +57,8 @@ include("Poly.jl")
 include("RationalFunctionField.jl")
 include("Fraction.jl")
 
+function zero! end
+
 include("Generic.jl")
 
 import .Generic: fit!, setcoeff!, normalise
