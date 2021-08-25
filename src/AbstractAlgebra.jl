@@ -1,8 +1,3 @@
-@doc Markdown.doc"""
- AbstractAlgebra is a pure Julia package for computational abstract algebra.
-
- For more information see https://github.com/Nemocas/AbstractAlgebra.jl
-"""
 module AbstractAlgebra
 
 using Random: SamplerTrivial, GLOBAL_RNG
@@ -11,57 +6,6 @@ using RandomExtensions: RandomExtensions, make, Make, Make2, Make3, Make4
 using Markdown
 
 using InteractiveUtils
-
-using Test # for "interface-conformance" functions
-
-# A list of all symbols external packages should not import from AbstractAlgebra
-import_exclude = [:import_exclude, :QQ, :ZZ,
-                  :RealField, :NumberField,
-                  :AbstractAlgebra,
-                  :inv, :log, :exp, :sqrt, :div, :divrem,
-                  :numerator, :denominator,
-                  :promote_rule,
-                  :Set, :Module, :Ring, :Group, :Field]
-
-# If you want to add methods to functions in LinearAlgebra they should be
-# imported here and in Generic.jl, and exported below.
-# They should not be imported/exported anywhere else.
-
-import LinearAlgebra: det, issymmetric, istriu, norm, nullspace, rank,
-                      transpose!, hessenberg
-
-import LinearAlgebra: lu, lu!, tr
-
-################################################################################
-#
-#  Import/export philosophy
-#
-#  For certain julia Base types and Base function, e.g. BigInt and div or exp, we
-#  need a different behavior. These functions are not exported.
-#
-#  Take for example exp. Since exp is not imported from Base, there are two exp
-#  functions, AbstractAlgebra.exp and Base.exp. Inside AbstractAlgebra, exp
-#  will always refer to AbstractAlgebra.exp. When calling the function, one
-#  should just use "exp" without namespace qualifcation.
-#
-#  On the other hand, if an AbstractAlgebra type wants to add a method to exp,
-#  it must add a method to "Base.exp".
-#
-#  The rational for this is as follows: If we do "using AbstractAlgebra" in the
-#  REPL, then "exp" will refer to the Base.exp. So if we want to make exp(a)
-#  work in the REPL for an AbstractAlgebra type, we have to overload Base.exp.
-#
-################################################################################
-
-# This is the list of functions for which we locally have a different behavior.
-const Base_import_exclude = [:exp, :log, :sqrt, :inv, :div, :divrem, :numerator,
-		             :denominator]
-
-################################################################################
-#
-#  Functions that we do not import from Base
-#
-################################################################################
 
 function exp(a::T) where T
    return Base.exp(a)
@@ -142,34 +86,6 @@ end
 
 function show_via_expressify
 end
-
-###############################################################################
-# Macros for fancy printing and extending objects when desired
-# fancy printing (and extending)
-# change
-#
-# struct bla..
-# ..
-# end
-#
-# to
-#
-# struct bla ..
-# @declare_other
-# ...
-# end
-#
-# Then, in the show function, start with
-# @show_name(io, obj)
-# If the user assigned a name to the object (in the REPL mainly) by doing
-# A = bla...
-# then, in the compact printing only the name "A" is printed
-# also adding
-# @show_special(io, obj)
-# allows, if present to call a different printing function for this instance
-# See FreeModule for an example
-#
-###############################################################################
 
 macro declare_other()
    esc(quote other::Dict{Symbol, Any} end )
@@ -272,23 +188,6 @@ macro show_special_elem(io, e)
   end )
 end
 
-###############################################################################
-# generic fall back if no immediate coercion is possible
-# can/ should be called for more generic general coercion mechanisms
-
-#tries to turn b into an element of a
-# applications (in outside AbstractAlgebra so far)
-#  - number fields (different cyclotomics, ie. coerce zeta_n into
-#    cyclo(m*n)
-#  - finite fields (although they roll their own)
-#  - unram. local fields
-#  - modules, abelian groups
-#
-# intended usage
-# (a::Ring)(b::elem_type(a))
-#   parent(b) == a && return a
-#   return force_coerce(a, b)
-#
 function force_coerce(a, b, throw_error::Type{Val{T}} = Val{true}) where {T}
   if throw_error === Val{true}
     throw(error("coercion not possible"))
@@ -297,10 +196,6 @@ function force_coerce(a, b, throw_error::Type{Val{T}} = Val{true}) where {T}
   end
 end
 
-#to allow +(a::T, b::T) where a, b have different parents, but
-# a common over structure
-# designed(?) to be minimally invasive in AA and Nemo, but filled with
-# content in Hecke/Oscar
 function force_op(op::Function, throw_error::Type{Val{T}}, a...) where {T}
   if throw_error === Val{true}
     throw(error("no common overstructure for the arguments found"))
@@ -316,17 +211,7 @@ function coeff end
 
 function set_length! end
 
-###############################################################################
-#
-#  Type for the Hash dictionary
-#
-###############################################################################
-
-@static if false #VERSION >= v"1.6"
-  const CacheDictType = WeakValueDict
-else
-  const CacheDictType = Dict
-end
+const CacheDictType = Dict
 
 function get_cached!(default::Base.Callable, dict::AbstractDict,
                                              key,
@@ -334,38 +219,13 @@ function get_cached!(default::Base.Callable, dict::AbstractDict,
    return use_cache ? Base.get!(default, dict, key) : default()
 end
 
-###############################################################################
-#
-#  Types
-#
-################################################################################
-
 include("AbstractTypes.jl")
 
 const PolynomialElem{T} = Union{PolyElem{T}, NCPolyElem{T}}
-const MatrixElem{T} = Union{MatElem{T}, MatAlgElem{T}}
-
-###############################################################################
-#
-#   Julia types
-#
-###############################################################################
 
 include("julia/JuliaTypes.jl")
 
-###############################################################################
-#
-#   Fundamental interface for AbstractAlgebra
-#
-###############################################################################
-
 include("fundamental_interface.jl")
-
-###############################################################################
-#
-#   Generic algorithms defined on abstract types
-#
-###############################################################################
 
 include("algorithms/GenericFunctions.jl")
 
@@ -374,16 +234,8 @@ include("Poly.jl")
 include("RationalFunctionField.jl")
 include("Fraction.jl")
 
-###############################################################################
-#
-#   Generic submodule
-#
-###############################################################################
-
 include("Generic.jl")
 
-# Do not import div, divrem, exp, inv, log, sqrt, numerator and denominator
-# as we have our own
 import .Generic: abs_series, abs_series_type,
                  base_field, basis,
                  character,
@@ -499,110 +351,15 @@ export abs_series, abs_series_type,
                  ismonic, Loc, Localization, LocElem, mulhigh_n,
                  PolyCoeffs, roots, sturm_sequence
 
-# TODO remove these two once removed from dependent packages (Hecke)
-export displayed_with_minus_in_front, show_minus_one
-
-################################################################################
-#
-#   Parent constructors
-#
-################################################################################
-
 export Generic
-
-###############################################################################
-#
-#   Polynomial Ring S, x = R["x"] syntax
-#
-###############################################################################
-
-getindex(R::NCRing, s::Union{String, Char, Symbol}) = PolynomialRing(R, s)
-getindex(R::NCRing, s::Union{String, Char, Symbol}, ss::Union{String, Char}...) =
-   PolynomialRing(R, [s, ss...])
-
-# syntax x = R["x"]["y"]
-getindex(R::Tuple{Union{Ring, NCRing}, Union{PolyElem, NCPolyElem}}, s::Union{String, Char, Symbol}) = PolynomialRing(R[1], s)
-
-###############################################################################
-#
-#   Load error objects
-#
-###############################################################################
 
 include("error.jl")
 
-###############################################################################
-#
-#   Load Groups/Rings/Fields etc.
-#
-###############################################################################
-
-include("Groups.jl")
-
-################################################################################
-#
-#   Printing
-#
-################################################################################
+include("Rings.jl")
 
 include("PrettyPrinting.jl")
 
-################################################################################
-#
-#   Deprecations
-#
-################################################################################
-
 include("Deprecations.jl")
-
-###############################################################################
-#
-#   Package handle creation
-#
-###############################################################################
-
-const package_handle = [1]
-
-function get_handle()
-   package_handle[1] += 1
-   return package_handle[1] - 1
-end
-
-###############################################################################
-#
-#   Auxilliary data accessors
-#
-###############################################################################
-
-mutable struct AccessorNotSetError <: Exception
-end
-
-function create_accessors(T, S, handle)
-   get = function(a, error::Bool = true)
-      if handle > length(a.auxilliary_data) ||
-         !isassigned(a.auxilliary_data, handle)
-        if error
-          throw(AccessorNotSetError())
-        else
-          return nothing
-        end
-      end
-      return a.auxilliary_data[handle]
-   end
-   set = function(a, b)
-      if handle > length(a.auxilliary_data)
-         resize!(a.auxilliary_data, handle)
-      end
-      a.auxilliary_data[handle] = b
-   end
-   return get, set
-end
-
-###############################################################################
-#
-#   Promote rule helpers
-#
-###############################################################################
 
 function sig_exists(T::Type{Tuple{U, V, W}}, sig_table::Vector{X}) where {U, V, W, X}
    for s in sig_table
@@ -612,12 +369,6 @@ function sig_exists(T::Type{Tuple{U, V, W}}, sig_table::Vector{X}) where {U, V, 
    end
    return false
 end
-
-###############################################################################
-#
-#   Array creation functions
-#
-###############################################################################
 
 Array(R::Ring, r::Int...) = Array{elem_type(R)}(undef, r)
 
@@ -630,44 +381,13 @@ function zeros(R::Ring, r::Int...)
    return A
 end
 
-###############################################################################
-#
-#   Set domain for ZZ, QQ
-#
-###############################################################################
-
 const ZZ = JuliaZZ
 const QQ = JuliaQQ
 
-###############################################################################
-#
-#   Generic algorithms defined on generic types
-#
-###############################################################################
-
 include("algorithms/DensePoly.jl")
-
-###############################################################################
-#
-#  For backwards compability
-#
-###############################################################################
 
 needs_parentheses(x) = false
 
 function isnegative end
-
-# TODO remove these two once removed from dependent packages (Hecke)
-@noinline function displayed_with_minus_in_front(x)
-  Base.depwarn("This function is deprecated",
-               :displayed_with_minus_in_front)
-  return string(x)[1] == "-"
-end
-
-@noinline function show_minus_one(x)
-  Base.depwarn("This function is deprecated",
-               :show_minus_one)
-  return true
-end
 
 end # module
