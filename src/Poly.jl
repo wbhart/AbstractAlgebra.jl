@@ -6,27 +6,10 @@ base_ring(a::PolynomialElem) = base_ring(parent(a))
 
 parent(a::PolynomialElem) = a.parent
 
-function isdomain_type(::Type{T}) where {S <: RingElement, T <: PolyElem{S}}
-   return isdomain_type(S)
-end
-
-function isexact_type(a::Type{T}) where {S <: RingElement, T <: PolyElem{S}}
-   return isexact_type(S)
-end
-
 function check_parent(a::PolynomialElem, b::PolynomialElem, throw::Bool = true)
    c = parent(a) != parent(b)
    c && throw && error("Incompatible polynomial rings in polynomial operation")
    return !c
-end
-
-function Base.hash(a::PolyElem, h::UInt)
-   b = 0x53dd43cd511044d1%UInt
-   for i in 0:length(a) - 1
-      b = xor(b, xor(hash(coeff(a, i), h), h))
-      b = (b << 1) | (b >> (sizeof(Int)*8 - 1))
-   end
-   return b
 end
 
 length(a::PolynomialElem) = a.length
@@ -49,18 +32,6 @@ function trailing_coefficient(a::PolynomialElem)
    end
 end
 
-function set_coefficient!(c::PolynomialElem{T}, n::Int, a::T) where T <: RingElement
-   return setcoeff!(c, n, a) # merely acts as generic fallback
-end
-
-function set_coefficient!(c::PolynomialElem{T}, n::Int, a::U) where {T <: RingElement, U <: Integer}
-   return setcoeff!(c, n, base_ring(c)(a)) # merely acts as generic fallback
-end
-
-function set_coefficient!(c::PolynomialElem{T}, n::Int, a::T) where T <: Integer
-   return setcoeff!(c, n, a) # merely acts as generic fallback
-end
-
 zero(R::PolyRing) = R(0)
 
 one(R::PolyRing) = R(1)
@@ -71,48 +42,7 @@ gens(R::PolyRing) = [gen(R)]
 
 iszero(a::PolynomialElem) = length(a) == 0
 
-isone(a::PolynomialElem) = length(a) == 1 && isone(coeff(a, 0))
-
-function isgen(a::PolynomialElem)
-    return length(a) == 2 && iszero(coeff(a, 0)) && isone(coeff(a, 1))
-end
-
 canonical_unit(x::PolynomialElem) = canonical_unit(leading_coefficient(x))
-
-function -(a::PolynomialElem)
-   len = length(a)
-   z = parent(a)()
-   fit!(z, len)
-   for i = 1:len
-      z = setcoeff!(z, i - 1, -coeff(a, i - 1))
-   end
-   z = set_length!(z, len)
-   return z
-end
-
-function +(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
-   check_parent(a, b)
-   lena = length(a)
-   lenb = length(b)
-   lenz = max(lena, lenb)
-   z = parent(a)()
-   fit!(z, lenz)
-   i = 1
-   while i <= min(lena, lenb)
-      z = setcoeff!(z, i - 1, coeff(a, i - 1) + coeff(b, i - 1))
-      i += 1
-   end
-   while i <= lena
-      z = setcoeff!(z, i - 1, deepcopy(coeff(a, i - 1)))
-      i += 1
-   end
-   while i <= lenb
-      z = setcoeff!(z, i - 1, deepcopy(coeff(b, i - 1)))
-      i += 1
-   end
-   z = set_length!(z, normalise(z, i - 1))
-   return z
-end
 
 function -(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
    check_parent(a, b)
@@ -168,24 +98,9 @@ function mul_classical(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
    return z
 end
 
-function use_karamul(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
-   return length(a) > 5 && length(b) > 5
-end
-
 function *(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
    check_parent(a, b)
       return mul_classical(a, b)
-end
-
-function *(a::T, b::PolyElem{T}) where {T <: RingElem}
-   len = length(b)
-   z = parent(b)()
-   fit!(z, len)
-   for i = 1:len
-      z = setcoeff!(z, i - 1, a*coeff(b, i - 1))
-   end
-   z = set_length!(z, normalise(z, len))
-   return z
 end
 
 function *(a::Union{Integer, Rational, AbstractFloat}, b::PolynomialElem)
@@ -197,85 +112,6 @@ function *(a::Union{Integer, Rational, AbstractFloat}, b::PolynomialElem)
    end
    z = set_length!(z, normalise(z, len))
    return z
-end
-
-*(a::PolyElem{T}, b::T) where {T <: RingElem} = b*a
-
-*(a::PolynomialElem, b::Union{Integer, Rational, AbstractFloat}) = b*a
-
-function pow_multinomial(a::PolyElem{T}, e::Int) where T <: RingElement
-   e < 0 && throw(DomainError(e, "exponent must be >= 0"))
-   lena = length(a)
-   lenz = (lena - 1) * e + 1
-   res = Array{T}(undef, lenz)
-   for k = 1:lenz
-      res[k] = base_ring(a)()
-   end
-   d = base_ring(a)()
-   first = coeff(a, 0)
-   res[1] = first ^ e
-   for k = 1 : lenz - 1
-      u = -k
-      for i = 1 : min(k, lena - 1)
-         t = coeff(a, i) * res[(k - i) + 1]
-         u += e + 1
-         res[k + 1] = addeq!(res[k + 1], t * u)
-      end
-      d = addeq!(d, first)
-      res[k + 1] = divexact(res[k + 1], d)
-   end
-   z = parent(a)(res)
-   z = set_length!(z, normalise(z, lenz))
-   return z
-end
-
-function ^(a::PolyElem{T}, b::Int) where T <: RingElement
-   b < 0 && throw(DomainError(b, "exponent must be >= 0"))
-   # special case powers of x for constructing polynomials efficiently
-   R = parent(a)
-   if isgen(a)
-      z = R()
-      fit!(z, b + 1)
-      z = setcoeff!(z, b, deepcopy(coeff(a, 1)))
-      for i = 1:b
-         z = setcoeff!(z, i - 1, deepcopy(coeff(a, 0)))
-      end
-      z = set_length!(z, b + 1)
-      return z
-   elseif b == 0
-      return one(R)
-   elseif length(a) == 0
-      return zero(R)
-   elseif length(a) == 1
-      return R(coeff(a, 0)^b)
-   elseif b == 1
-      return deepcopy(a)
-   else
-      if T <: FieldElement && characteristic(base_ring(R)) == 0
-         zn = 0
-         while iszero(coeff(a, zn))
-            zn += 1
-         end
-         if length(a) - zn < 8 && b > 4
-             f = shift_right(a, zn)
-             return shift_left(pow_multinomial(f, b), zn*b)
-         end
-      end
-      bit = ~((~UInt(0)) >> 1)
-      while (UInt(bit) & b) == 0
-         bit >>= 1
-      end
-      z = a
-      bit >>= 1
-      while bit != 0
-         z = z*z
-         if (UInt(bit) & b) != 0
-            z *= a
-         end
-         bit >>= 1
-      end
-      return z
-   end
 end
 
 function ==(x::PolyElem{T}, y::PolyElem{T}) where T <: RingElement
@@ -293,16 +129,6 @@ function ==(x::PolyElem{T}, y::PolyElem{T}) where T <: RingElement
    return true
 end
 
-==(x::PolyElem{T}, y::T) where T <: RingElem = ((length(x) == 0 && iszero(y))
-                        || (length(x) == 1 && coeff(x, 0) == y))
-
-==(x::PolynomialElem, y::Union{Integer, Rational, AbstractFloat}) = ((length(x) == 0 && iszero(base_ring(x)(y)))
-                        || (length(x) == 1 && coeff(x, 0) == y))
-
-==(x::T, y::PolyElem{T}) where T <: RingElem = y == x
-
-==(x::Union{Integer, Rational, AbstractFloat}, y::PolyElem) = y == x
-
 function shift_left(f::PolynomialElem, n::Int)
    n < 0 && throw(DomainError(n, "n must be >= 0"))
    if n == 0
@@ -316,23 +142,6 @@ function shift_left(f::PolynomialElem, n::Int)
    end
    for i = 1:flen
       r = setcoeff!(r, i + n - 1, coeff(f, i - 1))
-   end
-   return r
-end
-
-function shift_right(f::PolynomialElem, n::Int)
-   n < 0 && throw(DomainError(n, "n must be >= 0"))
-   flen = length(f)
-   if n >= flen
-      return zero(parent(f))
-   end
-   if n == 0
-      return f
-   end
-   r = parent(f)()
-   fit!(r, flen - n)
-   for i = 1:flen - n
-      r = setcoeff!(r, i - 1, coeff(f, i + n - 1))
    end
    return r
 end
@@ -364,28 +173,6 @@ function divexact(f::PolyElem{T}, g::PolyElem{T}; check::Bool=true) where T <: R
    return q
 end
 
-function divexact(a::PolyElem{T}, b::T; check::Bool=true) where {T <: RingElem}
-   iszero(b) && throw(DivideError())
-   z = parent(a)()
-   fit!(z, length(a))
-   for i = 1:length(a)
-      z = setcoeff!(z, i - 1, divexact(coeff(a, i - 1), b; check=check))
-   end
-   z = set_length!(z, length(a))
-   return z
-end
-
-function divexact(a::PolyElem, b::Union{Integer, Rational, AbstractFloat}; check::Bool=true)
-   iszero(b) && throw(DivideError())
-   z = parent(a)()
-   fit!(z, length(a))
-   for i = 1:length(a)
-      z = setcoeff!(z, i - 1, divexact(coeff(a, i - 1), b; check=check))
-   end
-   z = set_length!(z, length(a))
-   return z
-end
-
 function mod(f::PolyElem{T}, g::PolyElem{T}) where T <: RingElement
    check_parent(f, g)
    if length(g) == 0
@@ -408,206 +195,6 @@ function mod(f::PolyElem{T}, g::PolyElem{T}) where T <: RingElement
       end
    end
    return f
-end
-
-function rem(f::PolyElem{T}, g::PolyElem{T}) where T <: RingElement
-  return mod(f, g)
-end
-
-function Base.divrem(f::PolyElem{T}, g::PolyElem{T}) where T <: RingElement
-   check_parent(f, g)
-   if length(g) == 0
-      throw(DivideError())
-   end
-   if length(f) < length(g)
-      return zero(parent(f)), f
-   end
-   f = deepcopy(f)
-   binv = inv(leading_coefficient(g))
-   g = divexact(g, leading_coefficient(g))
-   qlen = length(f) - length(g) + 1
-   q = parent(f)()
-   fit!(q, qlen)
-   c = base_ring(f)()
-   while length(f) >= length(g)
-      q1 = leading_coefficient(f)
-      l = -q1
-      q = setcoeff!(q, length(f) - length(g), q1*binv)
-      for i = 1:length(g) - 1
-         c = mul!(c, coeff(g, i - 1), l)
-         u = coeff(f, i + length(f) - length(g) - 1)
-         u = addeq!(u, c)
-         f = setcoeff!(f, i + length(f) - length(g) - 1, u)
-      end
-      f = set_length!(f, normalise(f, length(f) - 1))
-   end
-   return q, f
-end
-
-function Base.div(f::PolyElem{T}, g::PolyElem{T}) where T <: RingElement
-   q, r = divrem(f, g)
-   return q
-end
-
-function Base.div(f::PolyElem{T}, g::T) where T <: Union{FieldElem, AbstractFloat, Rational}
-   return div(f, parent(f)(g))
-end
-
-function pseudorem(f::PolyElem{T}, g::PolyElem{T}) where T <: RingElement
-  check_parent(f, g)
-  iszero(g) && throw(DivideError())
-  if length(f) < length(g)
-     return f
-  end
-  k = length(f) - length(g) + 1
-  b = coeff(g, length(g) - 1)
-  x = gen(parent(f))
-  while length(f) >= length(g)
-     f = f*b - shift_left(coeff(f, length(f) - 1)*g, length(f) - length(g))
-     k -= 1
-  end
-  return f*b^k
-end
-
-function pseudodivrem(f::PolyElem{T}, g::PolyElem{T}) where T <: RingElement
-  check_parent(f, g)
-  iszero(g) && throw(DivideError())
-  if length(f) < length(g)
-     return zero(parent(f)), f
-  end
-  lenq = length(f) - length(g) + 1
-  k = lenq
-  q = parent(f)()
-  fit!(q, lenq)
-  b = coeff(g, length(g) - 1)
-  x = gen(parent(f))
-  while length(f) >= length(g)
-     for i = length(f) - length(g) + 2:lenq
-        q = setcoeff!(q, i - 1, coeff(q, i - 1) * b)
-     end
-     q = setcoeff!(q, length(f) - length(g), coeff(f, length(f) - 1))
-     f = f*b - shift_left(coeff(f, length(f) - 1)*g, length(f) - length(g))
-     k -= 1
-  end
-  while lenq > 0 && iszero(coeff(q, lenq - 1))
-     lenq -= 1
-  end
-  q = set_length!(q, lenq)
-  s = b^k
-  return q*s, f*s
-end
-
-function term_gcd(a::T, b::T) where T <: RingElement
-   return gcd(a, b)
-end
-
-function term_content(a::T) where T <: RingElement
-   return a
-end
-
-function term_gcd(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
-   d = min(degree(a), degree(b))
-   x = gen(parent(a))
-   return term_gcd(coeff(a, degree(a)), coeff(b, degree(b)))*x^d
-end
-
-function term_content(a::PolyElem{T}) where T <: RingElement
-   for i = 1:length(a)
-      c = coeff(a, i - 1)
-      if !iszero(c)
-         g = term_content(c)
-         for j = i + 1:length(a)
-            c = coeff(a, j - 1)
-            if !iszero(c)
-               g = term_gcd(g, term_content(c))
-            end
-         end
-         x = gen(parent(a))
-         return g*x^(i - 1)
-      end
-   end
-   return parent(a)()
-end
-
-function gcd(a::PolyElem{T}, b::PolyElem{T}, ignore_content::Bool = false) where T <: RingElement
-   check_parent(a, b)
-   if length(b) > length(a)
-      (a, b) = (b, a)
-   end
-   if iszero(b)
-      if iszero(a)
-         return a
-      else
-         return divexact(a, canonical_unit(leading_coefficient(a)))
-      end
-   end
-   if isone(b)
-      return b
-   end
-   if !ignore_content
-      c1 = content(a)
-      c2 = content(b)
-      a = divexact(a, c1)
-      b = divexact(b, c2)
-      c = gcd(c1, c2)
-   end
-   lead_monomial = isterm_recursive(leading_coefficient(a)) ||
-                   isterm_recursive(leading_coefficient(b))
-   trail_monomial = isterm_recursive(trailing_coefficient(a)) ||
-                    isterm_recursive(trailing_coefficient(b))
-   lead_a = leading_coefficient(a)
-   lead_b = leading_coefficient(b)
-   g = one(parent(a))
-   h = one(parent(a))
-   while true
-      d = length(a) - length(b)
-      r = pseudorem(a, b)
-      if r == 0
-         break
-      end
-      if length(r) == 1
-         b = one(parent(a))
-         break
-      end
-      (a, b) = (b, divexact(r, g*h^d))
-      g = leading_coefficient(a)
-      if d > 1
-         h = divexact(g^d, h^(d - 1))
-      else
-         h = h^(1 - d)*g^d
-      end
-   end
-   if !ignore_content
-      if !isterm_recursive(leading_coefficient(b)) &&
-         !isterm_recursive(trailing_coefficient(b))
-         if lead_monomial # lead term monomial, so content contains rest
-            d = divexact(leading_coefficient(b),
-	                 term_content(leading_coefficient(b)))
-            b = divexact(b, d)
-         elseif trail_monomial # trail term is monomial, so ditto
-            d = divexact(trailing_coefficient(b),
-			 term_content(trailing_coefficient(b)))
-            b = divexact(b, d)
-         else
-            glead = gcd(lead_a, lead_b)
-            if isterm_recursive(glead)
-               d = divexact(leading_coefficient(b),
-			     term_content(leading_coefficient(b)))
-               b = divexact(b, d)
-            else # last ditched attempt to find easy content
-               h = gcd(leading_coefficient(b), glead)
-               h = divexact(h, term_content(h))
-               flag, q = divides(b, h)
-               if flag
-                  b = q
-               end
-            end
-         end
-      end
-      b = divexact(b, content(b))
-   end
-   b = c*b
-   return divexact(b, canonical_unit(leading_coefficient(b)))
 end
 
 function gcd(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
@@ -642,112 +229,7 @@ function content(a::PolyElem)
    return z
 end
 
-function primpart(a::PolyElem)
-   d = content(a)
-   if iszero(d)
-      return zero(parent(a))
-   else
-      return divexact(a, d)
-   end
-end
-
-function gcdx(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
-   check_parent(a, b)
-   !isexact_type(T) && error("gcdx requires exact Bezout domain")
-   if length(a) == 0
-      if length(b) == 0
-         return zero(parent(a)), zero(parent(a)), zero(parent(a))
-      else
-         d = leading_coefficient(b)
-         return divexact(b, d), zero(parent(a)), divexact(one(parent(a)), d)
-      end
-   end
-   if length(b) == 0
-      d = leading_coefficient(a)
-      return divexact(a, d), divexact(one(parent(a)), d), zero(parent(a))
-   end
-   swap = false
-   if length(a) < length(b)
-      a, b = b, a
-      swap = true
-   end
-   c1 = content(a)
-   c2 = content(b)
-   A = divexact(a, c1)
-   B = divexact(b, c2)
-   u1, u2 = parent(a)(inv(c1)), zero(parent(a))
-   v1, v2 = zero(parent(a)), parent(a)(inv(c2))
-   while length(B) > 0
-      (Q, B), A = divrem(A, B), B
-      u2, u1 = u1 - Q*u2, u2
-      v2, v1 = v1 - Q*v2, v2
-   end
-   if swap
-      u1, v1 = v1, u1
-   end
-   d = gcd(c1, c2)
-   A, u1, v1 = d*A, d*u1, d*v1
-   d = leading_coefficient(A)
-   return divexact(A, d), divexact(u1, d), divexact(v1, d)
-end
-
-function gcdinv(a::PolyElem{T}, b::PolyElem{T}) where {T <: FieldElement}
-   check_parent(a, b)
-   R = base_ring(a)
-   if length(a) == 0
-      if length(b) == 0
-         return zero(parent(a)), zero(parent(a))
-      else
-         d = leading_coefficient(b)
-         return divexact(b, d), zero(parent(a))
-      end
-   end
-   if length(b) == 0
-      d = leading_coefficient(a)
-      return divexact(a, d), parent(a)(inv(d))
-   end
-   if length(a) < length(b)
-      a, b = b, a
-      u1, u2 = zero(parent(a)), one(parent(a))
-   else
-      u1, u2 = one(parent(a)), zero(parent(a))
-   end
-   lena = length(a)
-   lenb = length(b)
-   c1 = content(a)
-   c2 = content(b)
-   A = divexact(a, c1)
-   B = divexact(b, c2)
-   u1 *= inv(c1)
-   u2 *= inv(c2)
-   while lenb > 0
-      d = lena - lenb
-      (Q, B), A = divrem(A, B), B
-      lena = lenb
-      lenb = length(B)
-      u2, u1 = u1 - Q*u2, u2
-   end
-   d = gcd(c1, c2)
-   A, u1 = d*A, d*u1
-   d = leading_coefficient(A)
-   return divexact(A, d), divexact(u1, d)
-end
-
-function addmul!(z::PolyElem{T}, x::PolyElem{T}, y::PolyElem{T}, c::PolyElem{T}) where T <: RingElement
-   c = mul!(c, x, y)
-   z = addeq!(z, c)
-   return z
-end
-
 function PolynomialRing(R::Ring, s::Symbol; cached::Bool = true)
    return Generic.PolynomialRing(R, s; cached=cached)
-end
-
-function PolynomialRing(R::Ring, s::AbstractString; cached::Bool = true)
-   return PolynomialRing(R, Symbol(s); cached=cached)
-end
-
-function PolynomialRing(R::Ring, s::Char; cached::Bool = true)
-   return PolynomialRing(R, Symbol(s); cached=cached)
 end
 
