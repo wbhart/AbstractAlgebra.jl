@@ -33,10 +33,6 @@ function promote_rule(::Type{Frac{T}}, ::Type{U}) where {T <: RingElem, U <: Rin
    promote_rule(T, U) == T ? Frac{T} : Union{}
 end
 
-function (a::FracField{T})(b::RingElement) where {T <: RingElement}
-   return a(base_ring(a)(b))
-end
-
 function (a::FracField{T})() where {T <: RingElement}
    z = Frac{T}(zero(base_ring(a)), one(base_ring(a)))
    z.parent = a
@@ -58,69 +54,10 @@ function (a::FracField{T})(b::T, c::T) where {T <: RingElement}
    return z
 end
 
-function (a::FracField{T})(b::T, c::T) where {U <: FieldElem, T <: PolyElem{U}}
-   parent(b) != base_ring(a) && error("Could not coerce to fraction")
-   parent(c) != base_ring(a) && error("Could not coerce to fraction")
-   u = canonical_unit(c)
-   if !isone(u)
-      b = divexact(b, u)
-      c = divexact(c, u)
-   end
-   z = Frac{T}(b, c)
-   z.parent = a
-   return z
-end
-
-function (a::FracField{T})(b::T, c::Union{Integer, Rational, AbstractFloat}) where {T <: RingElement}
-   parent(b) != base_ring(a) && error("Could not coerce to fraction")
-   z = Frac{T}(b, base_ring(a)(c))
-   z.parent = a
-   return z
-end
-
-function (a::FracField{T})(b::T, c::Rational) where {U <: FieldElem, T <: PolyElem{U}}
-   parent(b) != base_ring(a) && error("Could not coerce to fraction")
-   b *= inv(c)
-   z = Frac{T}(b, one(base_ring(a)))
-   z.parent = a
-   return z
-end
-
-function (a::FracField{T})(b::Union{Integer, Rational, AbstractFloat}, c::T) where {T <: RingElement}
-   parent(c) != base_ring(a) && error("Could not coerce to fraction")
-   z = Frac{T}(base_ring(a)(b), c)
-   z.parent = a
-   return z
-end
-
-function (a::FracField{T})(b::Union{Integer, Rational}, c::T) where {U <: FieldElem, T <: PolyElem{U}}
-   parent(c) != base_ring(a) && error("Could not coerce to fraction")
-   b = base_ring(a)(b)
-   u = canonical_unit(c)
-   if !isone(u)
-      b = divexact(b, u)
-      c = divexact(c, u)
-   end
-   z = Frac{T}(b, c)
-   z.parent = a
-   return z
-end
-
 function (a::FracField{T})(b::Union{Integer, Rational, AbstractFloat}) where {T <: RingElement}
    z = Frac{T}(base_ring(a)(b), one(base_ring(a)))
    z.parent = a
    return z
-end
-
-function (a::FracField{T})(b::Integer, c::Integer) where {T <: RingElement}
-   z = Frac{T}(base_ring(a)(b), base_ring(a)(c))
-   z.parent = a
-   return z
-end
-
-function (a::FracField{T})(b::Frac{T}) where {T <: RingElement}
-   a != parent(b) && error("Could not coerce to fraction")
-   return b
 end
 
 function FractionField(R::AbstractAlgebra.Ring; cached=true)
