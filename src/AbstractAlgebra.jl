@@ -232,35 +232,7 @@ include("error.jl")
 
 include("Rings.jl")
 
-include("PrettyPrinting.jl")
-
-#function sig_exists(T::Type{Tuple{U, V, W}}, sig_table::Vector{X}) where {U, V, W, X}
-#   for s in sig_table
-#      if s === T
-#         return true
-#      end
-#   end
-#   return false
-#end
-
-#Array(R::Ring, r::Int...) = Array{elem_type(R)}(undef, r)
-
-#function zeros(R::Ring, r::Int...)
-#   T = elem_type(R)
-#   A = Array{T}(undef, r)
-#   for i in eachindex(A)
-#      A[i] = R()
-#   end
-#   return A
-#end
-
 const ZZ = JuliaZZ
 const QQ = JuliaQQ
-
-#include("algorithms/DensePoly.jl")
-
-#needs_parentheses(x) = false
-
-#function isnegative end
 
 end # module
