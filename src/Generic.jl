@@ -1,11 +1,6 @@
 module Generic
 
-import LinearAlgebra: det, issymmetric, norm,
-                      nullspace, rank, transpose!, hessenberg
-
-import LinearAlgebra: istriu, lu, lu!, tr
-
-using Markdown, Random, InteractiveUtils
+using Markdown, Random
 
 using Random: SamplerTrivial, GLOBAL_RNG
 using RandomExtensions: RandomExtensions, make, Make, Make2, Make3, Make4
