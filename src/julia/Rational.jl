@@ -14,10 +14,6 @@ base_ring(a::Rationals{T}) where T <: Integer = Integers{T}()
 
 base_ring(a::Rational{T}) where T <: Integer = Integers{T}()
 
-isexact_type(::Type{Rational{T}}) where T <: Integer = true
-
-isdomain_type(::Type{Rational{T}}) where T <: Integer = true
-
 zero(::Rationals{T}) where T <: Integer = Rational{T}(0)
 
 one(::Rationals{T}) where T <: Integer = Rational{T}(1)
@@ -32,56 +28,7 @@ function denominator(a::Rational, canonicalise::Bool=true)
    return Base.denominator(a) # all other types ignore canonicalise
 end
 
-function divrem(a::Rational{T}, b::Rational{T}) where T <: Integer
-   return a//b, zero(Rational{T})
-end
-
-function div(a::Rational{T}, b::Rational{T}) where T <: Integer
-   return a//b
-end
-
-divexact(a::Rational, b::Integer; check::Bool=true) = a//b
-
-divexact(a::Integer, b::Rational; check::Bool=true) = a//b
-
 divexact(a::Rational, b::Rational; check::Bool=true) = a//b
-
-function divides(a::T, b::T) where T <: Rational
-   if b == 0
-      return false, T(0)
-   else
-      return true, divexact(a, b; check=false)
-   end
-end
-
-function gcd(p::Rational{T}, q::Rational{T}) where T <: Integer
-   a = p.num*q.den
-   b = p.den*q.num
-   n = gcd(a, b)
-   d = p.den*q.den
-   if d != 1 && n != 0
-      g = gcd(n, d)
-      n = divexact(n, g)
-      d = divexact(d, g)
-   end
-   if n == 0
-      return Rational{T}(n, T(1))
-   else
-      return Rational{T}(n, d)
-   end
-end
-
-function gcdx(p::Rational{T}, q::Rational{T}) where {T <: Integer}
-   g = gcd(p, q)
-   if !iszero(p)
-      return (g, g//p, zero(q))
-   elseif !iszero(q)
-      return (g, zero(p), g//q)
-   else
-      @assert iszero(g)
-      return (g, zero(p), zero(p))
-   end
-end
 
 function zero!(a::Rational{T}) where T <: Integer
    n = a.num
@@ -160,24 +107,12 @@ function addeq!(a::Rational{T}, b::Rational{T}) where T <: Integer
    end
 end
 
-#=
-function addmul!(a::Rational{T}, b::Rational{T}, c::Rational{T}, d::Rational{T}) where T <: Integer
-   d = mul!(d, b, c)
-   a = addeq!(a, d)
-   return a
-end
-=#
-
 function (R::Rationals{T})() where T <: Integer
    return Rational{T}(0)
 end
 
 function (R::Rationals{T})(b) where T <: Integer
    return Rational{T}(b)
-end
-
-function (R::Rationals{T})(b::Integer, c::Integer) where T <: Integer
-   return Rational{T}(b, c)
 end
 
 FractionField(R::Integers{T}) where T <: Integer = Rationals{T}()
