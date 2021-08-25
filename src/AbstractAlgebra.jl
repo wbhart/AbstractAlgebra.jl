@@ -51,7 +51,9 @@ const PolynomialElem{T} = PolyElem{T}
 
 include("julia/JuliaTypes.jl")
 
-include("fundamental_interface.jl")
+elem_type(x)  = elem_type(typeof(x))
+
+parent_type(x) = parent_type(typeof(x))
 
 include("Poly.jl")
 include("RationalFunctionField.jl")
