@@ -1,31 +1,8 @@
-###############################################################################
-#
-#   Poly.jl : Generic polynomials over rings
-#
-###############################################################################
-
-###############################################################################
-#
-#   Data type and parent object methods
-#
-###############################################################################
-
 parent_type(::Type{Poly{T}}) where T <: RingElement = PolyRing{T}
 
 elem_type(::Type{PolyRing{T}}) where T <: RingElement = Poly{T}
 
-@doc Markdown.doc"""
-    dense_poly_type(::Type{T}) where T <: RingElement
-
-Return the type of a polynomial whose coefficients have the given type.
-"""
 dense_poly_type(::Type{T}) where T <: RingElement = Poly{T}
-
-###############################################################################
-#
-#   Basic manipulation
-#
-###############################################################################
 
 function setcoeff!(c::Poly{T}, n::Int, a::T) where T <: RingElement
    if !iszero(a) || n + 1 <= length(c)
@@ -71,12 +48,6 @@ function deepcopy_internal(a::Poly{T}, dict::IdDict) where T <: RingElement
    end
    return parent(a)(coeffs)
 end
-
-###############################################################################
-#
-#   Karatsuba multiplication
-#
-###############################################################################
 
 function use_karamul(a::Poly{BigInt}, b::Poly{BigInt})
    minlen = min(length(a), length(b))
@@ -129,12 +100,6 @@ function mul_karatsuba(a::Poly{T}, b::Poly{T}, cutoff::Int) where T <: RingEleme
    return z
 end
 
-@doc Markdown.doc"""
-    mullow_karatsuba(a::Poly{T}, b::Poly{T}, n::Int, cutoff::Int) where T <: RingElement
-
-Return $a \times b$ truncated to $n$ terms using the Karatsuba algorithm
-recursively for problems of size roughly greater than `cutoff`.
-"""
 function mullow_karatsuba(a::Poly{T}, b::Poly{T}, n::Int, cutoff::Int) where T <: RingElement
    alen = length(a)
    blen = length(b)
@@ -147,12 +112,6 @@ function mullow_karatsuba(a::Poly{T}, b::Poly{T}, n::Int, cutoff::Int) where T <
    z = set_length!(z, normalise(z, zlen))
    return z
 end
-
-###############################################################################
-#
-#   Unsafe functions
-#
-###############################################################################
 
 function set_length!(c::Poly{T}, n::Int) where T <: RingElement
    if n < c.length
@@ -253,25 +212,12 @@ function add!(c::Poly{T}, a::Poly{T}, b::Poly{T}) where T <: RingElement
    c = set_length!(c, normalise(c, len))
    return c
 end
- 
-
-###############################################################################
-#
-#   Promotion rules
-#
-###############################################################################
 
 promote_rule(::Type{Poly{T}}, ::Type{Poly{T}}) where T <: RingElement = Poly{T}
 
 function promote_rule(::Type{Poly{T}}, ::Type{U}) where {T <: RingElement, U <: RingElement}
    promote_rule(T, U) == T ? Poly{T} : Union{}
 end
-
-###############################################################################
-#
-#   Parent object call overload
-#
-###############################################################################
 
 function (a::PolyRing{T})(b::RingElement) where T <: RingElement
    return a(base_ring(a)(b))
@@ -344,12 +290,6 @@ function (a::PolyRing{T})(b::T) where {T <: Integer}
    z.parent = a
    return z
 end
-
-###############################################################################
-#
-#   PolynomialRing constructor
-#
-###############################################################################
 
 function PolynomialRing(R::AbstractAlgebra.Ring, s::Symbol; cached::Bool = true)
    T = elem_type(R)

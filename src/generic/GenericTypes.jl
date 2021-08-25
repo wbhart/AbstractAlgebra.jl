@@ -1,15 +1,3 @@
-###############################################################################
-#
-#   GenericTypes.jl : Generic Types
-#
-###############################################################################
-
-###############################################################################
-#
-#   PolyRing / Poly
-#
-###############################################################################
-
 mutable struct PolyRing{T <: RingElement} <: AbstractAlgebra.PolyRing{T}
    base_ring::Ring
    S::Symbol
@@ -39,12 +27,6 @@ mutable struct Poly{T <: RingElement} <: AbstractAlgebra.PolyElem{T}
    Poly{T}(a::T) where T <: RingElement = iszero(a) ? new{T}(Array{T}(undef, 0), 0) : new{T}([a], 1)
 end
 
-###############################################################################
-#
-#   FracField / Frac
-#
-###############################################################################
-
 mutable struct FracField{T <: RingElem} <: AbstractAlgebra.FracField{T}
    base_ring::Ring
 
@@ -64,12 +46,6 @@ mutable struct Frac{T <: RingElem} <: AbstractAlgebra.FracElem{T}
 
    Frac{T}(num::T, den::T) where T <: RingElem = new{T}(num, den)
 end
-
-###############################################################################
-#
-#   RationalFunctionField / rational_function
-#
-###############################################################################
 
 struct RationalFunctionField{T <: FieldElement} <: AbstractAlgebra.Field
    S::Symbol
