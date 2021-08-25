@@ -1,31 +1,8 @@
-###############################################################################
-#
-#   Poly.jl : Univariate polynomials
-#
-###############################################################################
-
-export PolyCoeffs, PolynomialRing, PolyRing, addmul!, characteristic,
-       chebyshev_t, chebyshev_u, coefficient_ring, coefficients, compose,
-       constant_coefficient, content, deflate, deflation, degree, derivative,
-       discriminant, divexact, divexact_low, divhigh, divides, evaluate,
-       gcdinv, inflate, integral, interpolate, ismonic, issquare, isterm,
-       isterm_recursive, map_coefficients, modulus,  monomial_to_newton!,
-       mul_classical, mulhigh_n, mul_karatsuba, mul_ks, mullow, mulmod,
-       newton_to_monomial!, nvars, polynomial, polynomial_to_power_sums,
-       power_sums_to_polynomial, pow_multinomial, primpart,
-       pseudodivrem, pseudorem, remove, resultant, resultant_ducos,
-       resultant_euclidean, resultant_lehmer, resultant_subresultant,
-       resultant_sylvester, resx, shift_left, shift_right, subst,
-       sylvester_matrix, symbols, tail, use_karamul, valuation, var,
-       set_coefficient!
+export divexact
 
 base_ring(R::PolyRing{T}) where T <: RingElement = R.base_ring::parent_type(T)
 
 base_ring(a::PolynomialElem) = base_ring(parent(a))
-
-#coefficient_ring(R::PolyRing) = base_ring(R)
-
-#coefficient_ring(a::PolynomialElem) = base_ring(a)
 
 parent(a::PolynomialElem) = a.parent
 
@@ -37,19 +14,11 @@ function isexact_type(a::Type{T}) where {S <: RingElement, T <: PolyElem{S}}
    return isexact_type(S)
 end
 
-#var(a::PolyRing) = a.S
-
-#symbols(a::PolyRing) = [a.S]
-
-#nvars(a::PolyRing) = 1
-
 function check_parent(a::PolynomialElem, b::PolynomialElem, throw::Bool = true)
    c = parent(a) != parent(b)
    c && throw && error("Incompatible polynomial rings in polynomial operation")
    return !c
 end
-
-#characteristic(a::PolyRing) = characteristic(base_ring(a))
 
 function Base.hash(a::PolyElem, h::UInt)
    b = 0x53dd43cd511044d1%UInt
@@ -61,9 +30,6 @@ function Base.hash(a::PolyElem, h::UInt)
 end
 
 length(a::PolynomialElem) = a.length
-
-#degree(a::PolynomialElem) = length(a) - 1
-
 
 function leading_coefficient(a::PolynomialElem)
    return length(a) == 0 ? zero(base_ring(a)) : coeff(a, length(a) - 1)
@@ -82,13 +48,6 @@ function trailing_coefficient(a::PolynomialElem)
       return coeff(a, length(a) - 1)
    end
 end
-
-#function constant_coefficient(a::PolynomialElem)
-#   if iszero(a)
-#      return zero(base_ring(a))
-#   end
-#   return coeff(a, 0)
-#end
 
 function set_coefficient!(c::PolynomialElem{T}, n::Int, a::T) where T <: RingElement
    return setcoeff!(c, n, a) # merely acts as generic fallback
@@ -117,103 +76,6 @@ isone(a::PolynomialElem) = length(a) == 1 && isone(coeff(a, 0))
 function isgen(a::PolynomialElem)
     return length(a) == 2 && iszero(coeff(a, 0)) && isone(coeff(a, 1))
 end
-
-#function ismonic(a::PolynomialElem)
-#    return isone(leading_coefficient(a))
-#end
-
-#isunit(a::PolynomialElem) = length(a) == 1 && isunit(coeff(a, 0))
-
-#function isterm(a::PolynomialElem)
-#   if iszero(a)
-#      return false
-#   end
-#   for i = 1:length(a) - 1
-#      if !iszero(coeff(a, i - 1))
-#         return false
-#      end
-#   end
-#   return true
-#end
-
-#isterm_recursive(a::T) where T <: RingElement = true
-
-#function isterm_recursive(a::PolynomialElem)
-#  if !isterm_recursive(leading_coefficient(a))
-#      return false
-#   end
-#   for i = 1:length(a) - 1
-#      if !iszero(coeff(a, i - 1))
-#         return false
-#      end
-#   end
-#   return true
-#end
-
-#function ismonomial(a::PolynomialElem)
-#   if !isone(leading_coefficient(a))
-#      return false
-#   end
-#   for i = 1:length(a) - 1
-#      if !iszero(coeff(a, i - 1))
-#         return false
-#      end
-#   end
-#   return true
-#end
-
-#ismonomial_recursive(a::T) where T <: RingElement = isone(a)
-
-#function ismonomial_recursive(a::PolynomialElem)
-#   if !ismonomial_recursive(leading_coefficient(a))
-#      return false
-#   end
-#   for i = 1:length(a) - 1
-#      if !iszero(coeff(a, i - 1))
-#         return false
-#      end
-#   end
-#   return true
-#end
-
-#function similar(x::PolyElem, R::Ring, s::Symbol=var(parent(x)); cached::Bool=true)
-#   TT = elem_type(R)
-#   V = Vector{TT}(undef, 0)
-#   p = Generic.Poly{TT}(V)
-#   # Default similar is supposed to return a polynomial
-#   if base_ring(x) === R && s == var(parent(x)) && typeof(x) === Generic.Poly{TT}
-#      # steal parent in case it is not cached
-#      p.parent = parent(x)
-#   else
-#      p.parent = Generic.PolyRing{TT}(R, s, cached)
-#   end
-#   p = set_length!(p, 0)
-#   return p
-#end
-#
-#function similar(x::PolyElem, var::Symbol=var(parent(x)); cached::Bool=true)
-#   return similar(x, base_ring(x), var; cached=cached)
-#end
-#
-#function similar(x::PolyElem, R::Ring, var::String; cached::Bool=true)
-#   return similar(x, R, Symbol(var); cached=cached)
-#end
-#
-#function similar(x::PolyElem, var::String; cached::Bool=true)
- #  return similar(x, base_ring(x), Symbol(var); cached=cached)
-#end
-#
-#zero(p::PolyElem, R::Ring, var::Symbol=var(parent(p)); cached::Bool=true) =
-#   similar(p, R, var; cached=cached)
-#
-#zero(p::PolyElem, var::Symbol=var(parent(p)); cached::Bool=true) =
-#   similar(p, base_ring(p), var; cached=cached)
-#
-#zero(p::PolyElem, R::Ring, var::String; cached::Bool=true) =
-#   zero(p, R, Symbol(var); cached=cached)
-#
-#zero(p::PolyElem, var::String; cached::Bool=true) =
-#   zero(p, base_ring(p), Symbol(var); cached=cached)
 
 canonical_unit(x::PolynomialElem) = canonical_unit(leading_coefficient(x))
 
@@ -276,57 +138,6 @@ function -(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
    return z
 end
 
-function mul_karatsuba(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
-   # we assume len(a) != 0 != lenb and parent(a) == parent(b)
-   lena = length(a)
-   lenb = length(b)
-   m = div(max(lena, lenb) + 1, 2)
-   if m < lena
-      a1 = shift_right(a, m)
-      a0 = truncate(a, m)
-   else
-      return a*truncate(b, m) + shift_left(a*shift_right(b, m), m)
-   end
-   if a !== b
-      if m < lenb
-         b1 = shift_right(b, m)
-         b0 = truncate(b, m)
-      else
-         return b*truncate(a, m) + shift_left(b*shift_right(a, m), m)
-      end
-   else
-      b1 = a1
-      b0 = a0
-   end
-   z0 = a0*b0
-   z2 = a1*b1
-   if a !== b
-      z1 = (a1 + a0)*(b1 + b0) - z2 - z0
-   else
-      s = a1 + a0
-      z1 = s*s - z2 - z0
-   end
-   r = parent(a)()
-   fit!(r, lena + lenb - 1)
-   for i = 1:length(z0)
-      r = setcoeff!(r, i - 1, coeff(z0, i - 1))
-   end
-   for i = length(z0) + 1:2m
-      r = setcoeff!(r, i - 1, base_ring(a)())
-   end
-   for i = 1:length(z2)
-      r = setcoeff!(r, 2m + i - 1, coeff(z2, i - 1))
-   end
-   for i = 1:length(z1)
-      u = coeff(r, i + m - 1)
-      u = addeq!(u, coeff(z1, i - 1))
-      setcoeff!(r, i + m - 1, u)
-   end
-   # necessary for finite characteristic
-   r = set_length!(r, normalise(r, length(r)))
-   return r
-end
-
 function mul_classical(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
    lena = length(a)
    lenb = length(b)
@@ -363,12 +174,7 @@ end
 
 function *(a::PolyElem{T}, b::PolyElem{T}) where T <: RingElement
    check_parent(a, b)
-   # karatsuba recurses into * so check lengths are > 1
-   if use_karamul(a, b) && length(a) > 1 && length(b) > 1
-      return mul_karatsuba(a, b)
-   else
       return mul_classical(a, b)
-   end
 end
 
 function *(a::T, b::PolyElem{T}) where {T <: RingElem}
