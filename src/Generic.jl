@@ -48,7 +48,7 @@ import ..AbstractAlgebra: add!, addeq!, addmul!, base_ring, canonical_unit,
                           issquare, isunit, leading_coefficient, log,
                           map_coefficients, max_precision, minpoly, modulus,
                           mul!, mul_classical, mul_karatsuba, mullow,
-                          numerator, ncols, ngens, nrows, nvars, O, order, parent_type,
+                          numerator, ncols, nrows, nvars, O, parent_type,
                           pol_length, primpart, promote_rule, pseudodivrem,
                           pseudorem, reduced_form, renormalize!,
                           set_coefficient!, set_field!,
@@ -61,74 +61,10 @@ using ..AbstractAlgebra
 
 include("generic/GenericTypes.jl")
 
-include("generic/PermGroups.jl")
-
-include("generic/YoungTabs.jl")
-
-include("generic/Residue.jl")
-
-include("generic/ResidueField.jl")
-
-include("generic/NumberField.jl")
-
 include("generic/Poly.jl")
-
-include("generic/NCPoly.jl")
-
-include("generic/MPoly.jl")
-
-include("generic/SparsePoly.jl")
-
-include("generic/LaurentPoly.jl")
-
-include("generic/RelSeries.jl")
-
-include("generic/AbsSeries.jl")
-
-include("generic/AbsMSeries.jl")
-
-include("generic/LaurentSeries.jl")
-
-include("generic/PuiseuxSeries.jl")
-
-include("generic/Matrix.jl")
-
-include("generic/MatrixAlgebra.jl")
 
 include("generic/Fraction.jl")
 
 include("generic/RationalFunctionField.jl")
-
-include("generic/FunctionField.jl")
-
-include("generic/FreeModule.jl")
-
-include("generic/Submodule.jl")
-
-include("generic/QuotientModule.jl")
-
-include("generic/DirectSum.jl")
-
-include("generic/ModuleHomomorphism.jl")
-
-include("generic/Module.jl")
-
-include("generic/InvariantFactorDecomposition.jl")
-
-include("generic/Map.jl")
-
-include("generic/MapWithInverse.jl")
-
-include("generic/MapCache.jl")
-
-###############################################################################
-#
-#   Temporary miscellaneous files being moved from Hecke.jl
-#
-###############################################################################
-
-include("generic/Misc/Poly.jl")
-include("generic/Misc/Rings.jl")
-include("generic/Misc/Localization.jl")
 
 end # generic

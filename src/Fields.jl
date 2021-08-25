@@ -4,8 +4,6 @@
 #
 ################################################################################
 
-include("julia/GF.jl")
-
 isdomain_type(::Type{T}) where {T <: FieldElem} = true
 
 //(a::T, b::T) where {T <: FieldElem} = divexact(a, b)
