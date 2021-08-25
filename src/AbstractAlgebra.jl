@@ -229,7 +229,6 @@ include("fundamental_interface.jl")
 
 include("algorithms/GenericFunctions.jl")
 
-include("CommonTypes.jl") # types needed by AbstractAlgebra and Generic
 include("Poly.jl")
 include("RationalFunctionField.jl")
 include("Fraction.jl")
