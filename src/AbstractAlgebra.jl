@@ -39,10 +39,6 @@ function denominator(a::T, canonicalise::Bool=true) where T
   return Base.denominator(a, canonicalise)
 end
 
-# If you want to add methods to functions in Base they should be imported here
-# and in Generic.jl.
-# They should not be imported/exported anywhere else.
-
 import Base: Array, abs, acos, acosh, adjoint, asin, asinh, atan, atanh, axes,
              bin, ceil, checkbounds, conj, convert, cmp, cos, cosh, cospi, cot,
              coth, dec, deepcopy, deepcopy_internal, expm1, exponent, fill,
@@ -85,126 +81,6 @@ function expressify
 end
 
 function show_via_expressify
-end
-
-macro declare_other()
-   esc(quote other::Dict{Symbol, Any} end )
-end
-
-function set_name!(G, name::String)
-   set_special(G, :name => name)
-end
-
-function hasspecial(G)
-   if !isdefined(G, :other)
-      return false, nothing
-   else
-     return true, G.other
-   end
-end
-
-function get_special(G, s::Symbol)
-   fl, D = hasspecial(G)
-   fl && return get(D, s, nothing)
-   nothing
-end
-
-function set_name!(G)
-   s = get_special(G, :name)
-   s === nothing || return
-   sy = find_name(G)
-   sy === nothing && return
-   set_name!(G, string(sy))
-end
-
-function set_special(G, data::Pair{Symbol, <:Any}...)
-  if !isdefined(G, :other)
-    D = G.other = Dict{Symbol, Any}()
-  else
-    D = G.other
-  end
-
-  for d in data
-    push!(D, d)
-  end
-end
-
-extra_name(G) = nothing
-
-macro show_name(io, O)
-  return :( begin
-    local i = $(esc(io))
-    local o = $(esc(O))
-    s = get_special(o, :name)
-    if s === nothing
-      sy = find_name(o)
-      if sy === nothing
-        sy = extra_name(o)
-      end
-      if sy !== nothing
-        s = string(sy)
-        set_name!(o, s)
-      end
-    end
-    if get(i, :compact, false) &&
-       s !== nothing
-      print(i, s)
-      return
-    end
-  end )
-end
-
-function find_name(A, M = Main)
-  for a = names(M)
-    a === :ans && continue
-    if isdefined(M, a) && getfield(M, a) === A
-        return a
-    end
-  end
-end
-
-macro show_special(io, O)
-  return :( begin
-    local i = $(esc(io))
-    local o = $(esc(O))
-    s = get_special(o, :show)
-    if s !== nothing
-      s(i, o)
-      return
-    end
-  end )
-end
-
-macro show_special_elem(io, e)
-  return :( begin
-    local i = $(esc(io))
-    local a = $(esc(e))
-    local o = parent(a)
-    s = get_special(o, :show_elem)
-    if s !== nothing
-      s(i, a)
-      return
-    end
-  end )
-end
-
-function force_coerce(a, b, throw_error::Type{Val{T}} = Val{true}) where {T}
-  if throw_error === Val{true}
-    throw(error("coercion not possible"))
-  else
-    return nothing
-  end
-end
-
-function force_op(op::Function, throw_error::Type{Val{T}}, a...) where {T}
-  if throw_error === Val{true}
-    throw(error("no common overstructure for the arguments found"))
-  end
-  return false
-end
-
-function force_op(op::Function, a...)
-  return force_op(op, Val{true}, a...)
 end
 
 function coeff end
@@ -358,33 +234,33 @@ include("Rings.jl")
 
 include("PrettyPrinting.jl")
 
-function sig_exists(T::Type{Tuple{U, V, W}}, sig_table::Vector{X}) where {U, V, W, X}
-   for s in sig_table
-      if s === T
-         return true
-      end
-   end
-   return false
-end
+#function sig_exists(T::Type{Tuple{U, V, W}}, sig_table::Vector{X}) where {U, V, W, X}
+#   for s in sig_table
+#      if s === T
+#         return true
+#      end
+#   end
+#   return false
+#end
 
-Array(R::Ring, r::Int...) = Array{elem_type(R)}(undef, r)
+#Array(R::Ring, r::Int...) = Array{elem_type(R)}(undef, r)
 
-function zeros(R::Ring, r::Int...)
-   T = elem_type(R)
-   A = Array{T}(undef, r)
-   for i in eachindex(A)
-      A[i] = R()
-   end
-   return A
-end
+#function zeros(R::Ring, r::Int...)
+#   T = elem_type(R)
+#   A = Array{T}(undef, r)
+#   for i in eachindex(A)
+#      A[i] = R()
+#   end
+#   return A
+#end
 
 const ZZ = JuliaZZ
 const QQ = JuliaQQ
 
-include("algorithms/DensePoly.jl")
+#include("algorithms/DensePoly.jl")
 
-needs_parentheses(x) = false
+#needs_parentheses(x) = false
 
-function isnegative end
+#function isnegative end
 
 end # module
