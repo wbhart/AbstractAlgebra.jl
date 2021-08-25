@@ -1,16 +1,4 @@
-###############################################################################
-#
-#   RationalFunctionField.jl : Rational function fields
-#
-###############################################################################
-
-export RationalFunctionField, norm
-
-###############################################################################
-#
-#   RationalFunctionField constructor
-#
-###############################################################################
+export RationalFunctionField
 
 function RationalFunctionField(k::Field, s::Symbol; cached=true)
    return Generic.RationalFunctionField(k, s; cached=cached)
