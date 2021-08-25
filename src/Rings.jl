@@ -56,10 +56,6 @@ divexact(x::RingElem, y::RingElement; check::Bool=true) = divexact(x, parent(x)(
 
 divexact(x::RingElement, y::RingElem; check::Bool=true) = divexact(parent(y)(x), y; check=check)
 
-divexact_left(x::T, y::T; check::Bool=true) where T <: RingElement = divexact(x, y; check=check)
-
-divexact_right(x::T, y::T; check::Bool=true) where T <: RingElement = divexact(x, y; check=check)
-
 Base.inv(x::RingElem) = divexact(one(parent(x)), x)
 
 function ==(x::RingElem, y::RingElem)
@@ -74,16 +70,6 @@ end
 ==(x::RingElem, y::RingElement) = x == parent(x)(y)
 
 ==(x::RingElement, y::RingElem) = parent(y)(x) == y
-
-function addmul!(z::T, x::T, y::T, c::T) where {T <: RingElem}
-   c = mul!(c, x, y)
-   z = addeq!(z, c)
-   return z
-end
-
-isexact_type(R::Type{T}) where T <: RingElem = true
-
-isdomain_type(R::Type{T}) where T <: RingElem = false
 
 include("julia/Integer.jl")
 
