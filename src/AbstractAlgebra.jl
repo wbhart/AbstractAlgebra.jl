@@ -5,8 +5,6 @@ using RandomExtensions: RandomExtensions, make, Make, Make2, Make3, Make4
 
 using Markdown
 
-using InteractiveUtils
-
 function exp(a::T) where T
    return Base.exp(a)
 end
@@ -70,17 +68,7 @@ export PolyRing, SeriesRing, ResRing, FracField, MatSpace, MatAlgebra,
 
 export ZZ, QQ, zz, qq, RealField, RDF
 
-export create_accessors, get_handle, package_handle, zeros,
-       Array, sig_exists
-
-export error_dim_negative, ErrorConstrDimMismatch
-
-export crt, factor, factor_squarefree
-
 function expressify
-end
-
-function show_via_expressify
 end
 
 function coeff end
@@ -102,8 +90,6 @@ const PolynomialElem{T} = Union{PolyElem{T}, NCPolyElem{T}}
 include("julia/JuliaTypes.jl")
 
 include("fundamental_interface.jl")
-
-include("algorithms/GenericFunctions.jl")
 
 include("Poly.jl")
 include("RationalFunctionField.jl")
