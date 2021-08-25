@@ -160,11 +160,13 @@ function addeq!(a::Rational{T}, b::Rational{T}) where T <: Integer
    end
 end
 
+#=
 function addmul!(a::Rational{T}, b::Rational{T}, c::Rational{T}, d::Rational{T}) where T <: Integer
    d = mul!(d, b, c)
    a = addeq!(a, d)
    return a
 end
+=#
 
 function (R::Rationals{T})() where T <: Integer
    return Rational{T}(0)
