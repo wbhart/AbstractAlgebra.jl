@@ -1,3 +1,4 @@
 struct a  
 end
-RingElement   = Union{}
+
+RingElement = Union{}
