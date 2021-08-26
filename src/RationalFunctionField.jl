@@ -1,8 +1,4 @@
 export RationalFunctionField
-
-function RationalFunctionField(k::Field, s::String; cached=true)
-   return Generic.RationalFunctionField(k, Symbol(s); cached=cached)
+function RationalFunctionField(a,  cached)
+   Generic.RationalFunctionField(a, b; cached)
 end
-
-
-
