@@ -1,19 +1,26 @@
 parent(a) = a.parent
-c(e::f) where f = e.d::Frac
-function h(::f) where f i::FracField
+
+c(e::T) where T = e.d::Frac
+
+function h(::T) where T
+   i::FracField
 end
-function *(Rat, b::Rat{f}) where f 
+
+function *(Rat, b::Rat{T}) where T
    c(b)  
-   end
-function (::RationalFunctionField)(b::Frac{f}) where f j && 
-   Rat{f}(b)
 end
+
+function (::RationalFunctionField)(b::Frac{T}) where T 
+   j && Rat{T}(b)
+end
+
 function (a::RationalFunctionField)(b)
    h(a)(b)
 end
+
 function RationalFunctionField(k, l; cached)
-   f = 
+   T = Int 
    g = 1
-   m = Rat{f}(g)
+   m = Rat{T}(g)
      RationalFunctionField, m
 end

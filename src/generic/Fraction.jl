@@ -1,1 +1,3 @@
-function(::FracField)(::c) where c Frac{c}(b, a)end
+function(::FracField)(::T) where T
+   Frac{T}(b, a)
+end

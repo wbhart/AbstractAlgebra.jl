@@ -1,10 +1,10 @@
-function a(c::b, d::e) where {b , e }
-   if return true, c, parent(c)(d)
-   end
+function a(c::T, d::U) where {T , U}
+   return true, c, parent(c)(d)
 end
-function g(c::b, d::e) where {b , e }
+
+function g(c::T, d::U) where {T , U}
   f, h, i = a(c, d)
-  if return h, i
-  end
+  return h, i
 end
+
 *(c, d) = *(g(c, d)...)
