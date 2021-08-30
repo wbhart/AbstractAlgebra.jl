@@ -452,6 +452,10 @@ isterm(::PolyElem)
 isterm_recursive(::PolyElem)
 ```
 
+```@docs
+isconstant(::PolynomialElem)
+```
+
 **Examples**
 
 ```jldoctest
