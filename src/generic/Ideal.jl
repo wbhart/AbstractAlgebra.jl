@@ -1000,53 +1000,54 @@ end
 
 const SNODE_DEBUG = false
 
-struct snode{T<:AbstractAlgebra.PolyElem{<:RingElement}}
-   poly::T
-   sgen::Int # generation of spolys
-end
-
-function check_d(D::Vector{W}, m::Int) where {T <: AbstractAlgebra.PolyElem{<:RingElement}, W <: snode{T}}
+function check_d(D::Vector{T}, m::Int) where {T <: AbstractAlgebra.PolyElem{<:RingElement}}
    if !isempty(D)
-      len = length(D[1].poly)
+      len = length(D[1])
       for d in D
-         if length(d.poly) > len
+         if length(d) > len
             error(m, ": Polynomials not in order in D")
          end
-         len = length(d.poly)
+         len = length(d)
       end
    end
 end
 
-function check_v(V::Vector{W}, m::Int) where {T <: AbstractAlgebra.PolyElem{<:RingElement}, W <: snode{T}}
-   len = length(V[1].poly) - 1
-   c = 2*leading_coefficient(V[1].poly)
+function check_v(V::Vector{T}, m::Int) where {T <: AbstractAlgebra.PolyElem{<:RingElement}}
+   len = length(V[1]) - 1
+   c = 2*leading_coefficient(V[1])
    for v in V
-      if length(v.poly) <= len
+      if length(v) <= len
          error(m, ": Polynomials not in order in V")
       end
-      len = length(v.poly)
+      len = length(v)
    end
    n = length(V)
    if n >= 2
-      if isunit(leading_coefficient(V[n].poly)) && isunit(leading_coefficient(V[n - 1].poly))
+      if isunit(leading_coefficient(V[n])) && isunit(leading_coefficient(V[n - 1]))
          error(m, ": Two unit leading coefficients")
       end
    end
    for v in V
-      if !divides(c, leading_coefficient(v.poly))[1]
+      if !divides(c, leading_coefficient(v))[1]
          error(m, ": Leading coefficients do not divide in V")
       end
-      if divides(leading_coefficient(v.poly), c)[1]
+      if divides(leading_coefficient(v), c)[1]
          error(m, ": Associate leading coefficients in V")
       end
-      c = leading_coefficient(v.poly)
+      c = leading_coefficient(v)
    end
 end
 
 function mysize(f::T) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
-   s = 0
+   s = 0.0
+   j = 0
    for i = 1:length(f)
-      s += ndigits(coeff(f, i - 1); base=2)*i
+      c = coeff(f, i - 1)
+      if !iszero(c)
+         j += 1
+         l = Base.log(ndigits(c; base=2))
+         s += l*j
+      end
    end
    return s
 end
@@ -1056,80 +1057,49 @@ function mysize2(f::T) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}
 end
 
 function mypush!(H::Vector{T}, f::T) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
-   index = searchsortedfirst(H, f, by=mysize2, rev=true) # find index at which to insert x
+   index = searchsortedfirst(H, f, by=mysize, rev=true) # find index at which to insert x
    insert!(H, index, f)
 end
 
 # Extend the basis V of polynomials satisfying 1-6 below by the
 # polynomials in D, all of which have degree at least that of those in
 # V and such that the degrees of the polynomials in D is *decreasing*.
-function extend_ideal_basis(D::Vector{W}, V::Vector{W}, H::Vector{T}) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}, W <: snode{T}}
+function extend_ideal_basis(D::Vector{T}, V::Vector{T}, H::Vector{T}, M::Vector{T}) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
    sgen = 1
    while !isempty(D)
+#=
+println("D1 = ", D)
+println("V1 = ", V)
+println("H1 = ", H)
+println("M1 = ", M)
+=#
       d = pop!(D)
-      V = extend_ideal_basis(D, d, V, H)
+      V = extend_ideal_basis(D, d, V, H, M)
+#=
+println("D2 = ", D)
+println("V2 = ", V)
+println("H2 = ", H)
+println("M2 = ", M)
+=#
       if SNODE_DEBUG
          check_d(D, 1)
          check_v(V, 1)
       end
       if !isempty(H)
-         V = insert_fragments(D, V, H)
+         V = insert_fragments(D, V, H, M)
          if SNODE_DEBUG
             check_d(D, 2)
             check_v(V, 2)
          end
       end
-      V = insert_spolys(V, H, sgen)
-      if SNODE_DEBUG
-         check_v(V, 3)
-      end
-      sgen += 1
-      while !isempty(H)
-         V = insert_fragments(D, V, H)
-         if SNODE_DEBUG
-            check_d(D, 4)
-            check_v(V, 4)
-         end
-         V = insert_spolys(V, H, sgen)
-         if SNODE_DEBUG
-            check_v(V, 5)
-         end
-         sgen += 1
-      end
    end
+#=
+println("D3 = ", D)
+println("V3 = ", V)
+println("H3 = ", H)
+println("M3 = ", M)   
+=#
    return V
-end
-
-function reduce_tail(f::W, V::AbstractVector{W}) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}, W <: snode{T}}
-   p = divexact(f.poly, canonical_unit(f.poly))
-   i = length(V)
-   n = length(p) - 1
-   while n > 0
-      c = coeff(p, n - 1)
-      while n > 0 && iszero(c)
-         n -= 1
-         if n > 0
-            c = coeff(p, n - 1)
-         end
-      end
-      if n > 0
-         while i > 0 && length(V[i].poly) > n
-            i -= 1
-         end
-         if i != 0 && !iszero(c)
-            h = leading_coefficient(V[i].poly) # should be nonnegative
-            h < 0 && error("h must be positive")
-            q, r = AbstractAlgebra.divrem(c, h)
-            if r >= ((h + 1) >> 1)
-               q += 1
-            end 
-            u = shift_left(V[i].poly, n - length(V[i].poly))
-            p -= q*u        
-         end
-         n -= 1
-      end
-   end
-   return p == f.poly ? snode{T}(p, f.sgen) : snode{T}(p, 0)
 end
 
 function reduce_tail(f::T, V::AbstractVector{T}) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
@@ -1156,7 +1126,11 @@ function reduce_tail(f::T, V::AbstractVector{T}) where {U <: RingElement, T <: A
                q += 1
             end 
             u = shift_left(V[i], n - length(V[i]))
-            p -= q*u        
+            if isone(q)
+               p = addeq!(p, -u)
+            else
+               p = addeq!(p, (-q)*u)
+            end
          end
          n -= 1
       end
@@ -1194,35 +1168,34 @@ function reduce(p::T, V::Vector{T}) where {U <: RingElement, T <: AbstractAlgebr
    return p
 end
 
-function insert_spolys(V::Vector{W}, H::Vector{T}, sgen::Int) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}, W <: snode{T}}
-   for i in length(V):-1:1
-      v1 = V[i]
-      p1 = v1.poly
-      if i > 1
-         v2 = V[i - 1]
-         if v1.sgen != sgen || v2.sgen != sgen # v1, v2 is a critical pair that has not been dealt with
-            p2 = v2.poly
-            c = divexact(leading_coefficient(p2), leading_coefficient(p1))
-            # compute spoly
-            s = c*p1 - shift_left(p2, length(p1) - length(p2))
-            if !iszero(s)
-               mypush!(H, s)
-            end
-         end
+function insert_spoly(V::Vector{T}, H::Vector{T}, n::Int) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
+   p1 = V[n]
+   if n > 1
+      p2 = V[n - 1]
+      c = divexact(leading_coefficient(p2), leading_coefficient(p1))
+      s = c*p1 - shift_left(p2, length(p1) - length(p2))
+      if !iszero(s)
+         mypush!(H, s)
       end
-      V[i] = snode{T}(v1.poly, sgen + 1)
    end
-   return V
+   if n < length(V)
+      p2 = V[n + 1]
+      c = divexact(leading_coefficient(p1), leading_coefficient(p2))
+      s = c*p2 - shift_left(p1, length(p2) - length(p1))
+      if !iszero(s)
+         mypush!(H, s)
+      end
+   end
 end
 
-function insert_fragments(D::Vector{W}, V::Vector{W}, H::Vector{T}) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}, W <: snode{T}}
+function insert_fragments(D::Vector{T}, V::Vector{T}, H::Vector{T}, M::Vector{T}) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
    max_len = 0
    for h in H
       max_len = max(max_len, length(h))
    end
    while !isempty(H)
       n = length(V)
-      len = length(V[n].poly)
+      len = length(V[n])
       if max_len >= len # may be fragments that are too long
          V2 = T[]
          i = 1
@@ -1241,32 +1214,36 @@ function insert_fragments(D::Vector{W}, V::Vector{W}, H::Vector{T}) where {U <: 
          while length(H) >= j
             pop!(H)
          end
-         if length(V2) > 0
-            # put long fragments back in D
-            sort!(V2, by=mysize2, rev=true)
-            append!(D, [snode{T}(p, 0) for p in V2])
+         while !isempty(V2)
+            v = pop!(V2)
+            index = searchsortedfirst(D, v, by=mysize2, rev=true) # find index at which to insert x
+            insert!(D, index, v)
          end
       end
       if !isempty(H)
          p = pop!(H)
-         while n >= 1 && length(V[n].poly) > length(p)
+         while n >= 1 && length(V[n]) > length(p)
             n -= 1
          end
          # Reduce p by leading coefficients that divide
-         while n >= 1 && ((_, q) = divides(leading_coefficient(p), leading_coefficient(V[n].poly)))[1]
-            p -= q*shift_left(V[n].poly, length(p) - length(V[n].poly))
-            while n >= 1 && length(V[n].poly) > length(p)
+         while n >= 1 && ((_, q) = divides(leading_coefficient(p), leading_coefficient(V[n])))[1]
+            if isone(q)
+               p -= shift_left(V[n], length(p) - length(V[n]))
+            else
+               p -= q*shift_left(V[n], length(p) - length(V[n]))
+            end
+            while n >= 1 && length(V[n]) > length(p)
                n -= 1
             end
          end
          # Insert p
          if !iszero(p)
             if n >= 1
-               v = V[n].poly
+               v = V[n]
                if length(p) == length(v)
                   if ((flag, q) = divides(leading_coefficient(v), leading_coefficient(p)))[1]
                      # V[n] can be swapped with p and reduced
-                     V[n], r = reduce_tail(snode{T}(p, 0), view(V, 1:n - 1)), V[n].poly
+                     V[n], r = reduce_tail(p, view(V, 1:n - 1)), V[n]
                      r -= q*p
                      if !iszero(r)
                         mypush!(H, r)
@@ -1274,9 +1251,13 @@ function insert_fragments(D::Vector{W}, V::Vector{W}, H::Vector{T}) where {U <: 
                   else # use gcdx
                      g, s, t = gcdx(leading_coefficient(v), leading_coefficient(p))
                      p, r = s*v + t*p, p # p has leading coefficient g dividing that of r (old p) and v
-                     V[n] = reduce_tail(snode{T}(p, 0), view(V, 1:n - 1))
+                     V[n] = reduce_tail(p, view(V, 1:n - 1))
                      q = divexact(leading_coefficient(r), g)
-                     r -= q*p
+                     if isone(q)
+                        r -= p
+                     else
+                        r -= q*p
+                     end
                      if !iszero(r)
                         mypush!(H, r)
                      end
@@ -1289,43 +1270,35 @@ function insert_fragments(D::Vector{W}, V::Vector{W}, H::Vector{T}) where {U <: 
                else # length(p) > length(v)
                   if divides(leading_coefficient(v), leading_coefficient(p))[1]
                      # p can be inserted
-                     insert!(V, n + 1, reduce_tail(snode{T}(p, 0), view(V, 1:n)))
+                     insert!(V, n + 1, reduce_tail(p, view(V, 1:n)))
                      n += 1
                   else # use gcdx
                      g, s, t = gcdx(leading_coefficient(v), leading_coefficient(p))
                      r = s*shift_left(v, length(p) - length(v)) + t*p # r has leading coeff g dividing that of p
                      q = divexact(leading_coefficient(p), g)
-                     p -= r*q
+                     if isone(q)
+                        p -= r
+                     else
+                        p -= r*q
+                     end
                      if !iszero(p)
                         mypush!(H, p)
                      end
                      p = r
                      # p can be inserted
-                     insert!(V, n + 1, reduce_tail(snode{T}(p, 0), view(V, 1:n)))
+                     insert!(V, n + 1, reduce_tail(p, view(V, 1:n)))
                      n += 1
                   end
                end
             else # p is the smallest polynomial
                p = divexact(p, canonical_unit(p))
-               insert!(V, 1, snode{T}(p, 0))
-               v = V[2].poly
+               insert!(V, 1, p)
                n = 1
-               if !divides(leading_coefficient(v), leading_coefficient(p))[1] &&
-                  !divides(leading_coefficient(p), leading_coefficient(v))[1] # use gcdx
-                  n = 2
-                  g, s, t = gcdx(leading_coefficient(v), leading_coefficient(p))
-                  p = s*v + t*shift_left(p, length(v) - length(p)) # p has leading coefficient g dividing that of v
-                  q = divexact(leading_coefficient(v), g)
-                  r, V[n] = v - q*p, reduce_tail(snode{T}(p, 0), view(V, 1:1))
-                  if !iszero(r)
-                     mypush!(H, r)
-                  end
-               end
             end
             # adjust entries above p
             orig_n = n
             while n < length(V)
-               v = V[n + 1].poly
+               v = V[n + 1]
                if ((flag, q) = divides(leading_coefficient(v), leading_coefficient(p)))[1]
                   v -= q*shift_left(p, length(v) - length(p))
                   if !iszero(v)
@@ -1339,46 +1312,209 @@ function insert_fragments(D::Vector{W}, V::Vector{W}, H::Vector{T}) where {U <: 
                   g, s, t = gcdx(leading_coefficient(v), leading_coefficient(p))
                   p = s*v + t*shift_left(p, length(v) - length(p)) # p has leading coefficient g dividing that of v
                   q = divexact(leading_coefficient(v), g)
-                  r, V[n + 1] = v - q*p, reduce_tail(snode{T}(p, 0), view(V, 1:n))
+                  if isone(q)
+                     r, V[n + 1] = v - p, reduce_tail(p, view(V, 1:n))
+                  else
+                     r, V[n + 1] = v - q*p, reduce_tail(p, view(V, 1:n))
+                  end
                   if !iszero(r)
-                  mypush!(H, r)
+                     mypush!(H, r)
+                  end
+                  if isterm(V[orig_n])
+                     V[n + 1] = reduce_tail(V[n + 1], view(V, orig_n:orig_n))
                   end
                   n += 1
                end
             end
+            if isterm(V[orig_n])
+               while n < length(V)
+                  V[n + 1] = reduce_tail(V[n + 1], view(V, orig_n:orig_n))
+                  n += 1
+               end
+            end
+            # insert s-polys
+            insert_spoly(V, H, orig_n)
          end
       end
    end
    return V
 end
 
+function reduce_by_monomials(f::T, M::Vector{T}, n1::Int, n2::Int) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
+   f2 = f
+   n = n2
+   len = length(f2)
+   while n > 0 && length(M[n]) > len
+      n -= 1
+   end
+   z = base_ring(f)()
+   while n >= 1
+      if f2 !== M[n] # make sure we don't reduce f2 by itself
+         if divides(leading_coefficient(f2), leading_coefficient(M[n]))[1] # poly is reduced
+            if f2 === f
+               f2 = deepcopy(f)
+            end
+            f2 = setcoeff!(f2, length(f2) - 1, z)
+            len = length(f2)
+            while n >= 1 && length(M[n]) > len
+               n -= 1
+            end
+         elseif divides(leading_coefficient(M[n]), leading_coefficient(f2))[1] # done
+            break
+         else # use gcdx
+            break
+         end
+      end
+      n -= 1
+      if n < n1 && f2 === f
+         break
+      end
+   end
+   return f2
+end
+
+function reduce_by_monomials(D::Vector{T}, V::Vector{T}, H::Vector{T}, M::Vector{T}, n1::Int, n2::Int) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
+   minlen = length(M[n1])
+   maxlen = length(V[length(V)])
+   NM = T[] # new monomials generated by this process
+   i = 1
+   while i <= length(H)
+      f = H[i]
+      if length(f) >= minlen
+         f2 = f
+         if !isterm(f)
+            f2 = reduce_by_monomials(f, M, n1, n2)
+         end
+         if f2 !== f
+            deleteat!(H, i)
+            if !iszero(f2)
+               if isterm(f2)
+                  push!(NM, f2)
+               end
+               mypush!(H, f2)
+               i += 1
+            end
+         else
+            i += 1
+         end
+      end
+   end
+   i = 1
+   while i <= length(D)
+      f = D[i]
+      f2 = f
+      if !isterm(f)
+         f2 = reduce_by_monomials(f, M, n1, n2)
+      end
+      if f2 !== f
+         deleteat!(D, i)
+         if !iszero(f2)
+            if isterm(f2)
+               push!(NM, f2)
+            end
+            if length(f2) >= maxlen
+               index = searchsortedfirst(D, f2, by=mysize2, rev=true) # find index at which to insert x
+               insert!(D, index, f2)            
+            else
+               mypush!(H, f2)
+            end
+            i += 1
+         end
+      else
+         i += 1
+      end
+   end
+   for v in NM
+      insert_monomial(D, V, H, M, v)
+   end
+end
+
+function insert_monomial(D::Vector{T}, V::Vector{T}, H::Vector{T}, M::Vector{T}, f::T) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
+   n = length(M)
+   len = length(f)
+   while n > 0 && length(M[n]) > len
+      n -= 1
+   end
+   if n >= 1
+      if divides(leading_coefficient(f), leading_coefficient(M[n]))[1] # monomial is reduced to 0
+         return
+      end
+      if len == length(M[n])
+         if divides(leading_coefficient(M[n]), leading_coefficient(f))[1] # f can replace M[n]
+            M[n] = deepcopy(f)
+         else # use gcdx
+            g, s, t = gcdx(leading_coefficient(M[n]), leading_coefficient(f))
+            M[n] = setcoeff!(M[n], len - 1, g)
+            f = M[n]
+         end
+      else
+         if !divides(leading_coefficient(M[n]), leading_coefficient(f))[1] # use gcdx
+            g, s, t = gcdx(leading_coefficient(M[n]), leading_coefficient(f))
+            f = deepcopy(f)
+            f = setcoeff!(f, len - 1, g)
+         else
+            f = deepcopy(f)
+         end
+         n += 1
+         insert!(M, n, f)
+      end
+   else # monomial is smallest
+      n += 1
+      insert!(M, n, deepcopy(f))
+   end
+   orig_n = n
+   # reduce larger monomials
+   while n < length(M)
+      if divides(leading_coefficient(M[n + 1]), leading_coefficient(f))[1]
+         deleteat!(M, n + 1)
+      elseif divides(leading_coefficient(f), leading_coefficient(M[n + 1]))[1]
+         break
+      else # use gcdx
+         n += 1
+         g, s, t = gcdx(leading_coefficient(M[n]), leading_coefficient(f))
+         M[n] = setcoeff!(M[n], length(M[n]) - 1, g)
+         f = M[n]
+      end
+   end
+   # reduce everything else by new monomials
+   reduce_by_monomials(D, V, H, M, orig_n, n)
+end
+
 # Given a nonempty vector V of polynomials of satisfying 1-6 below and a
 # polynomial p whose degree is at least that of all the polynomials in V, add
 # p to V and perform reduction steps so that 1-6 still hold. Fragments which
 # are generated and need to be added later go in H.
-function extend_ideal_basis(D::Vector{W}, f::W, V::Vector{W}, H::Vector{T}) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}, W <: snode{T}}
-   while true
-      p = f.poly
+function extend_ideal_basis(D::Vector{T}, f::T, V::Vector{T}, H::Vector{T}, M::Vector{T}) where {U <: RingElement, T <: AbstractAlgebra.PolyElem{U}}
+      p = f
       n = length(V)
-      lc = leading_coefficient(V[n].poly)
+      lc = leading_coefficient(V[n])
       # check if p can be added without any reduction
-      if length(p) > length(V[n].poly) && !divides(leading_coefficient(p), lc)[1] && ((_, q) = divides(lc, leading_coefficient(p)))[1]
-         return vcat(V, [reduce_tail(f, V)])
+      if length(p) > length(V[n]) && !divides(leading_coefficient(p), lc)[1] && ((_, q) = divides(lc, leading_coefficient(p)))[1]
+         f = reduce_tail(f, V)
+         V = push!(V, f)
+         insert_spoly(V, H, n + 1)
+         return V
       end
       # check if p and V[n] are constant
-      if isconstant(V[n].poly) && isconstant(p)
-         return [snode{T}(parent(p)(gcd(constant_coefficient(p), constant_coefficient(V[n].poly))), 1)]
+      if isconstant(V[n]) && isconstant(p)
+         newp = parent(p)(gcd(constant_coefficient(p), constant_coefficient(V[n])))
+         V = [newp]
+         insert_monomial(D, V, H, M, newp)
+         return V
       end
       # check if p can replace V[n]
       swap = false
-      if length(p) == length(V[n].poly) && !isunit(lc) && ((_, q) = divides(lc, leading_coefficient(p)))[1]
-         p, V[n] = V[n].poly, reduce_tail(f, view(V, 1:n - 1))
+      if length(p) == length(V[n]) && !isunit(lc) && ((_, q) = divides(lc, leading_coefficient(p)))[1]
+         p, V[n] = V[n], reduce_tail(f, view(V, 1:n - 1))
          swap = true
       end
       # check if leading coefficients divide leading_coefficient of p
-      while n >= 1 && (swap || ((_, q) = divides(leading_coefficient(p), leading_coefficient(V[n].poly)))[1])
-         p -= q*shift_left(V[n].poly, length(p) - length(V[n].poly))
-         while n >= 1 && length(V[n].poly) > length(p)
+      while n >= 1 && (swap || ((_, q) = divides(leading_coefficient(p), leading_coefficient(V[n])))[1])
+         p -= q*shift_left(V[n], length(p) - length(V[n]))
+         if isterm(p)
+            insert_monomial(D, V, H, M, p)
+         end
+         while n >= 1 && length(V[n]) > length(p)
             n -= 1
          end
          swap = false
@@ -1387,19 +1523,23 @@ function extend_ideal_basis(D::Vector{W}, f::W, V::Vector{W}, H::Vector{T}) wher
          return V
       end
       if n < length(V) # we made some progress, p is a fragment
-         push!(H, p)
+         mypush!(H, p)
          return V
       end
       # we made no progress, use gcdx
       n = length(V)
-      v = V[n].poly
+      v = V[n]
       g, s, t = gcdx(leading_coefficient(p), leading_coefficient(v))
       r = s*p + t*shift_left(v, length(p) - length(v)) # r has leading coeff g
       q = divexact(leading_coefficient(p), g)
-      p -= q*r
+      if isone(q)
+         p -= r
+      else
+         p -= q*r
+      end
       if length(r) == length(v) # V[n] can be reduced by r and switched
          q = divexact(leading_coefficient(v), g)
-         r, V[n] = v - q*r, reduce_tail(snode{T}(r, 0), view(V, 1:n - 1))
+         r, V[n] = v - q*r, reduce_tail(r, view(V, 1:n - 1))
          if length(r) > length(p)
             r, p = p, r
          end
@@ -1407,29 +1547,48 @@ function extend_ideal_basis(D::Vector{W}, f::W, V::Vector{W}, H::Vector{T}) wher
             return V
          end
          if length(r) == 0 # one polynomial was absorbed, yay!
-            @assert length(p) < length(v)
-            push!(H, p)
+            if isterm(p)
+               insert_monomial(D, V, H, M, p)
+            end
+            mypush!(H, p)
             return V
          else
-            @assert length(p) < length(v)
-            push!(H, p, r)
+            if isterm(p)
+               insert_monomial(D, V, H, M, p)
+            end
+            if isterm(r)
+               insert_monomial(D, V, H, M, r)
+            end
+            mypush!(H, p)
+            mypush!(H, r)
             return V
          end
       else # length(r) > length(v)
          if !iszero(p)
             if length(p) >= length(v)
-              push!(D, snode{T}(r, 0))
-            else 
-               push!(H, p)
+               if isterm(r)
+                  insert_monomial(D, V, H, M, r)
+               end
+               index = searchsortedfirst(D, r, by=mysize2, rev=true) # find index at which to insert x
+               insert!(D, index, r)
+            else
+               if isterm(p)
+                  insert_monomial(D, V, H, M, p)
+               end
+               mypush!(H, p)
                p = r
             end
          else
             p = r 
          end
          # p still needs reduction
+         if isterm(p)
+            insert_monomial(D, V, H, M, p)
+         end
       end
-      f = snode{T}(p, 0)
-   end
+   index = searchsortedfirst(D, p, by=mysize2, rev=true) # find index at which to insert x
+   insert!(D, index, p)
+   return V
 end
       
 # We call an ideal over a polynomial ring over a Euclidean domain reduced if
@@ -1450,18 +1609,16 @@ function reduce(I::Ideal{T}; complete_reduction::Bool=true) where {U <: RingElem
          if isconstant(d)
             S = parent(d)
             d0 = constant_coefficient(d)
-            while !isempty(D) && isconstant(D[1])
+            while !isempty(D) && isconstant(D[length(D)])
                di = constant_coefficient(pop!(D))
                d0 = gcd(d0, di)
             end
             d = S(d0)
          end
-         W = [snode{T}(divexact(d, canonical_unit(d)), 1)]
-         B = [snode{T}(p, 0) for p in D]
+         V = [divexact(d, canonical_unit(d))]
          H = T[]
-         W = extend_ideal_basis(B, W, H)
-         # extract polys from nodes
-         V = [n.poly for n in W]
+         M = T[]
+         V = extend_ideal_basis(D, V, H, M)
       elseif length(V) == 1
          d = V[1]
          V = [divexact(d, canonical_unit(d))]
