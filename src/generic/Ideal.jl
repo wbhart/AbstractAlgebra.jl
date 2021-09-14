@@ -1506,6 +1506,7 @@ function extend_ideal_basis(D::Vector{T}, f::T, V::Vector{T}, H::Vector{T}, M::V
       swap = false
       if length(p) == length(V[n]) && !isunit(lc) && ((_, q) = divides(lc, leading_coefficient(p)))[1]
          p, V[n] = V[n], reduce_tail(f, view(V, 1:n - 1))
+         insert_spoly(V, H, n)
          swap = true
       end
       # check if leading coefficients divide leading_coefficient of p
@@ -1540,6 +1541,7 @@ function extend_ideal_basis(D::Vector{T}, f::T, V::Vector{T}, H::Vector{T}, M::V
       if length(r) == length(v) # V[n] can be reduced by r and switched
          q = divexact(leading_coefficient(v), g)
          r, V[n] = v - q*r, reduce_tail(r, view(V, 1:n - 1))
+         insert_spoly(V, H, n)
          if length(r) > length(p)
             r, p = p, r
          end
