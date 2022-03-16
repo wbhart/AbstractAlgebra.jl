@@ -717,6 +717,7 @@ const RealField = JuliaRealField
 
 include("algorithms/MPolyFactor.jl")
 include("algorithms/DensePoly.jl")
+include("algorithms/AlgebraicFactor.jl")
 
 ###############################################################################
 #
